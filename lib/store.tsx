@@ -113,7 +113,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const [showSunriseModal, setShowSunriseModal] = useState<boolean>(false);
   const [showRandomMemoryModal, setShowRandomMemoryModal] = useState<boolean>(false);
 
-  // Data state (starts clean)
+  // Data state (starts clean with Reunion in Mumbai)
   const [letters, setLetters] = useState<Letter[]>(INITIAL_LETTERS);
   const [dinners, setDinners] = useState<DinnerItem[]>(INITIAL_DINNERS);
   const [gratitudes, setGratitudes] = useState<GratitudeNote[]>(INITIAL_GRATITUDES);
@@ -129,7 +129,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const [playlist, setPlaylist] = useState<PlaylistSongItem[]>(INITIAL_PLAYLIST);
   const [dailyMission, setDailyMission] = useState<DailyMissionItem>(INITIAL_DAILY_MISSION);
 
-  // Load state from localStorage safely on mount
+  // Load state from localStorage safely on mount with automatic state migration
   useEffect(() => {
     try {
       const savedAuth = localStorage.getItem("sunrise_auth_user");
@@ -145,6 +145,20 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
 
       const l = localStorage.getItem("sunrise_letters");
       if (l) setLetters(JSON.parse(l));
+
+      const cd = localStorage.getItem("sunrise_countdowns");
+      if (cd) {
+        const parsed: CountdownItem[] = JSON.parse(cd);
+        // Automatically migrate any old "Reunion in Nashik" entry to "Reunion in Mumbai 🚆"
+        const updated = parsed.map((item) =>
+          item.title.toLowerCase().includes("nashik")
+            ? { ...item, title: "Reunion in Mumbai 🚆", targetDate: "2026-08-15T10:00:00Z" }
+            : item
+        );
+        setCountdowns(updated);
+      } else {
+        setCountdowns(INITIAL_COUNTDOWNS);
+      }
     } catch {
       setIsLoggedIn(false);
     }
@@ -160,10 +174,11 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       }
       localStorage.setItem("sunrise_theme", theme);
       localStorage.setItem("sunrise_letters", JSON.stringify(letters));
+      localStorage.setItem("sunrise_countdowns", JSON.stringify(countdowns));
     } catch {
       // fallback
     }
-  }, [isLoggedIn, loggedInUser, theme, letters]);
+  }, [isLoggedIn, loggedInUser, theme, letters, countdowns]);
 
   const login = (user: UserRole) => {
     setLoggedInUser(user);
