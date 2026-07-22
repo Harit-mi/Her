@@ -5,8 +5,8 @@ service firebase.storage {
     
     function isWhitelistedCouple() {
       return request.auth != null && (
-        request.auth.token.email == 'harit@sunrise.app' || 
-        request.auth.token.email == 'ameera@sunrise.app'
+        request.auth.token.email.matches('.*harit.*') || 
+        request.auth.token.email.matches('.*ameera.*')
       );
     }
 

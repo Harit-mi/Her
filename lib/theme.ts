@@ -18,7 +18,11 @@ export const themeTokens = {
     duration: 0.5,
     ease: [0.25, 0.1, 0.25, 1.0],
   },
-  allowlistEmails: (process.env.NEXT_PUBLIC_WHITELISTED_EMAILS || "harit@sunrise.app,ameera@sunrise.app")
+  // Configurable email allowlist (supports real Gmail addresses & custom domain emails)
+  allowlistEmails: (
+    process.env.NEXT_PUBLIC_WHITELISTED_EMAILS ||
+    "harit@gmail.com,ameera@gmail.com,harit@sunrise.app,ameera@sunrise.app"
+  )
     .split(",")
     .map((e) => e.trim().toLowerCase()),
 };

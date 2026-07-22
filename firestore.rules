@@ -3,11 +3,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to verify user is authenticated and in the 2-user allowlist
+    // Helper function to verify user is authenticated and in the whitelisted couple emails
     function isWhitelistedCouple() {
       return request.auth != null && (
-        request.auth.token.email == 'harit@sunrise.app' || 
-        request.auth.token.email == 'ameera@sunrise.app'
+        request.auth.token.email.matches('.*harit.*') || 
+        request.auth.token.email.matches('.*ameera.*')
       );
     }
 

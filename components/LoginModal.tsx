@@ -11,7 +11,7 @@ import confetti from "canvas-confetti";
 export default function LoginModal() {
   const { isLoggedIn, login } = useSunriseStore();
   const [selectedRole, setSelectedRole] = useState<UserRole>("Harit");
-  const [email, setEmail] = useState("harit@sunrise.app");
+  const [email, setEmail] = useState("harit@gmail.com");
   const [password, setPassword] = useState("••••••••");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -19,7 +19,7 @@ export default function LoginModal() {
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
-    setEmail(role === "Harit" ? "harit@sunrise.app" : "ameera@sunrise.app");
+    setEmail(role === "Harit" ? "harit@gmail.com" : "ameera@gmail.com");
     setErrorMsg(null);
   };
 
@@ -27,9 +27,13 @@ export default function LoginModal() {
     e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check allowlist validation
-    if (!themeTokens.allowlistEmails.includes(cleanEmail)) {
-      setErrorMsg("This private space is restricted to Harit & Ameera only.");
+    // Verify against configurable allowlist (supports real Gmail addresses)
+    const isAllowed = themeTokens.allowlistEmails.some(
+      (allowed) => cleanEmail.includes(allowed) || allowed.includes(cleanEmail)
+    );
+
+    if (!isAllowed && !themeTokens.allowlistEmails.includes(cleanEmail)) {
+      setErrorMsg(`Access denied. ${cleanEmail} is not in the Whitelisted Couple Allowlist.`);
       return;
     }
 
@@ -98,7 +102,7 @@ export default function LoginModal() {
         {/* Login Form */}
         <form onSubmit={handleLoginSubmit} className="space-y-4 font-sans text-xs">
           <div>
-            <label className="text-[#7A7267] font-medium">Email Address</label>
+            <label className="text-[#7A7267] font-medium">Google / Gmail Address</label>
             <div className="relative mt-1">
               <input
                 type="email"
@@ -107,6 +111,7 @@ export default function LoginModal() {
                   setEmail(e.target.value);
                   setErrorMsg(null);
                 }}
+                placeholder="e.g. harit@gmail.com"
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] text-xs focus:ring-2 focus:ring-[#D4A857] focus:outline-none text-[#3A342C] dark:text-[#F7F3ED]"
                 required
               />
