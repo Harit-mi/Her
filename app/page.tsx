@@ -36,8 +36,6 @@ export default function Home() {
     countdowns,
   } = useSunriseStore();
 
-  // SERVER / CLIENT AUTH GUARD: If not logged in, render ONLY the Login Card.
-  // Zero private data (cities, names, letters, dinners) is output to unauthenticated users.
   if (!isLoggedIn) {
     return <LoginModal />;
   }
@@ -84,7 +82,7 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Inter-State Live Weather Badges */}
+        {/* Inter-State Live Weather Badges: Gujarat (Ahmedabad) & Maharashtra (Nashik) */}
         <div className="flex items-center gap-2 text-xs font-sans">
           <div className="glass-panel px-3.5 py-2 rounded-2xl flex items-center gap-2 shadow-xs">
             <CloudSun className="w-4 h-4 text-[#D4A857]" />
@@ -96,12 +94,12 @@ export default function Home() {
             </div>
           </div>
           <div className="glass-panel px-3.5 py-2 rounded-2xl flex items-center gap-2 shadow-xs">
-            <CloudSun className="w-4 h-4 text-blue-400" />
+            <CloudSun className="w-4 h-4 text-emerald-500" />
             <div>
               <p className="font-medium text-[#3A342C] dark:text-[#F7F3ED]">
-                Maharashtra 🇮🇳 27°C
+                Maharashtra 🇮🇳 25°C
               </p>
-              <p className="text-[10px] text-[#7A7267] dark:text-[#B0A79C]">Mumbai • Sea Breeze 🌊</p>
+              <p className="text-[10px] text-[#7A7267] dark:text-[#B0A79C]">Nashik • Pleasant Breeze 🍃</p>
             </div>
           </div>
         </div>
@@ -209,7 +207,7 @@ export default function Home() {
                 : "Log your very first shared dinner date together!"}
             </h3>
             <p className="text-xs text-[#7A7267] dark:text-[#B0A79C] font-sans mt-0.5">
-              Cooked or ordered across Gujarat & Maharashtra over video calls.
+              Cooked or ordered across Ahmedabad & Nashik over video calls.
             </p>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { PROFILES } from "@/lib/initialData";
-import { MapPin, Navigation, Train } from "lucide-react";
+import { Navigation, Train } from "lucide-react";
 
 export default function InteractiveMapCanvas() {
   const harit = PROFILES["Harit"];
@@ -16,7 +16,7 @@ export default function InteractiveMapCanvas() {
             <Navigation className="w-5 h-5 text-[#D4A857]" /> Gujarat 🇮🇳 ↔ Maharashtra 🇮🇳 Connection
           </h3>
           <p className="text-xs font-sans text-[#7A7267]">
-            Vande Bharat Express route (520 km) • Indian Standard Time (IST)
+            Ahmedabad ↔ Nashik route (470 km) • Indian Standard Time (IST)
           </p>
         </div>
 
@@ -30,7 +30,7 @@ export default function InteractiveMapCanvas() {
         <svg className="w-full h-full" viewBox="0 0 500 220" fill="none">
           {/* Glowing Animated Route Path */}
           <path
-            d="M 120,70 Q 250,110 380,150"
+            d="M 120,70 Q 250,110 380,140"
             stroke="#D4A857"
             strokeWidth="3"
             strokeDasharray="6 6"
@@ -46,10 +46,10 @@ export default function InteractiveMapCanvas() {
             </text>
           </g>
 
-          {/* Ameera Pin - Mumbai, Maharashtra */}
-          <g transform="translate(380, 150)">
-            <circle r="14" fill="#3B82F6" fillOpacity="0.3" className="animate-ping" />
-            <circle r="8" fill="#3B82F6" />
+          {/* Ameera Pin - Nashik, Maharashtra */}
+          <g transform="translate(380, 140)">
+            <circle r="14" fill="#10B981" fillOpacity="0.3" className="animate-ping" />
+            <circle r="8" fill="#10B981" />
             <text x="0" y="24" textAnchor="middle" fill="#3A342C" className="text-[11px] font-bold font-sans dark:fill-[#F7F3ED]">
               {ameera.name} ({ameera.city}, {ameera.state} 🇮🇳)
             </text>
@@ -58,7 +58,7 @@ export default function InteractiveMapCanvas() {
 
         {/* Distance Pill */}
         <div className="absolute top-4 right-4 glass-panel px-3 py-1.5 rounded-full text-xs font-sans font-medium text-[#3A342C] dark:text-[#F7F3ED] shadow-xs">
-          📍 Distance: 520 km
+          📍 Distance: 470 km
         </div>
       </div>
     </div>

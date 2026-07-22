@@ -32,7 +32,7 @@ export const PROFILES: Record<"Harit" | "Ameera", UserProfile> = {
     id: "Ameera",
     name: "Ameera",
     partnerName: "Harit",
-    city: "Mumbai",
+    city: "Nashik",
     state: "Maharashtra",
     country: "India",
     flag: "🇮🇳",
@@ -41,7 +41,7 @@ export const PROFILES: Record<"Harit" | "Ameera", UserProfile> = {
   },
 };
 
-// Clean initial start state for Harit & Ameera (0 dinners, 0 letters, clean slate)
+// Clean initial start state for Harit & Ameera
 export const INITIAL_LETTERS: Letter[] = [];
 
 export const INITIAL_DINNERS: DinnerItem[] = [];
@@ -55,7 +55,7 @@ export const INITIAL_VOICE_NOTES: VoiceNoteItem[] = [];
 export const INITIAL_WISHES: WishItem[] = [
   {
     id: "wish-1",
-    title: "Take Vande Bharat express together from Ahmedabad to Mumbai 🚆",
+    title: "Take train trip together from Ahmedabad to Nashik 🚆",
     category: "Travel",
     completed: false,
     addedBy: "Ameera",
@@ -74,7 +74,7 @@ export const INITIAL_SURPRISES: SurpriseItem[] = [];
 export const INITIAL_COUNTDOWNS: CountdownItem[] = [
   {
     id: "cd-1",
-    title: "Vande Bharat Reunion in Mumbai 🚆",
+    title: "Reunion in Nashik 🚆",
     targetDate: "2026-08-15T10:00:00Z",
     category: "Visit",
     icon: "🚆",
