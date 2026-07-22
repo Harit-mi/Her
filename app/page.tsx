@@ -34,8 +34,8 @@ export default function Home() {
     countdowns,
   } = useSunriseStore();
 
-  const userProfile = PROFILES[currentUser];
-  const partnerProfile = PROFILES[currentUser === "Alex" ? "Sam" : "Alex"];
+  const userProfile = PROFILES[currentUser] || PROFILES["Harit"];
+  const partnerProfile = PROFILES[currentUser === "Harit" ? "Ameera" : "Harit"];
 
   const currentHour = new Date().getHours();
   const isMorning = currentHour >= 5 && currentHour < 17;
@@ -51,7 +51,7 @@ export default function Home() {
   const totalDinners = dinners.reduce((acc, curr) => Math.max(acc, curr.number), 0);
 
   const isMissionDone =
-    currentUser === "Alex" ? dailyMission.completedByAlex : dailyMission.completedBySam;
+    currentUser === "Harit" ? dailyMission.completedByAlex : dailyMission.completedBySam;
 
   const handleMissionCheck = () => {
     toggleMission(currentUser);
@@ -71,7 +71,7 @@ export default function Home() {
           <h1 className="text-3xl sm:text-4xl font-serif text-[#3A342C] dark:text-[#F7F3ED] font-normal">
             {greeting}
           </h1>
-          <p className="text-sm font-sans text-[#7A7267] dark:text-[#B0A79C]">
+          <p className="text-xs sm:text-sm font-sans text-[#7A7267] dark:text-[#B0A79C]">
             Private Space • {userProfile.city} ({userProfile.state}) ↔ {partnerProfile.city} ({partnerProfile.state}) 🇮🇳
           </p>
         </div>
@@ -237,7 +237,7 @@ export default function Home() {
               {dailyMission.text}
             </p>
             <p className="text-[11px] font-sans text-[#7A7267] mt-1">
-              Status: Alex ({dailyMission.completedByAlex ? "Done ✓" : "Pending"}) • Sam ({dailyMission.completedBySam ? "Done ✓" : "Pending"})
+              Status: Harit ({dailyMission.completedByAlex ? "Done ✓" : "Pending"}) • Ameera ({dailyMission.completedBySam ? "Done ✓" : "Pending"})
             </p>
           </div>
         </div>

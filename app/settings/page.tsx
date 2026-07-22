@@ -3,7 +3,7 @@
 import React from "react";
 import { useSunriseStore } from "@/lib/store";
 import { PROFILES } from "@/lib/initialData";
-import { Settings as SettingsIcon, Moon, Sun, Type, Download, ShieldCheck, UserCheck, Smartphone } from "lucide-react";
+import { Settings, Moon, Sun, Download, Trash2, UserCheck, Smartphone } from "lucide-react";
 
 export default function SettingsPage() {
   const {
@@ -13,114 +13,150 @@ export default function SettingsPage() {
     toggleTheme,
     fontStyle,
     setFontStyle,
+    resetAllData,
     letters,
     dinners,
     gratitudes,
     memories,
+    voiceNotes,
+    wishes,
   } = useSunriseStore();
 
   const handleExportData = () => {
-    const data = { letters, dinners, gratitudes, memories, exportedAt: new Date().toISOString() };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `sunrise_memories_backup_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
+    const backupData = {
+      exportDate: new Date().toISOString(),
+      letters,
+      dinners,
+      gratitudes,
+      memories,
+      voiceNotes,
+      wishes,
+    };
+    const jsonStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(backupData, null, 2))}`;
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", jsonStr);
+    downloadAnchor.setAttribute("download", `sunrise_backup_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handleReset = () => {
+    if (confirm("Are you sure you want to reset all data back to original initial defaults?")) {
+      resetAllData();
+      alert("All local data has been reset to default state.");
+    }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 space-y-8">
+    <div className="max-w-4xl mx-auto px-4 space-y-6">
       <div>
-        <h1 className="text-3xl font-serif text-stone-800 dark:text-stone-100 font-medium flex items-center gap-2">
-          <SettingsIcon className="w-7 h-7 text-amber-500" /> Settings & Customization
+        <h1 className="text-3xl font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium flex items-center gap-2">
+          <Settings className="w-7 h-7 text-[#D4A857]" /> App Settings & PWA ⚙️
         </h1>
-        <p className="text-xs font-sans text-stone-500">
-          Preferences, theme controls, data backups, and user switching.
+        <p className="text-xs font-sans text-[#7A7267]">
+          Customize themes, view account information, and export your private memory archives.
         </p>
       </div>
 
-      {/* Dual User Switcher Card */}
-      <div className="glass-panel p-6 rounded-3xl space-y-4 border border-stone-200/80 dark:border-stone-800">
-        <h2 className="text-lg font-serif text-stone-800 dark:text-stone-100 font-medium flex items-center gap-2">
-          <UserCheck className="w-5 h-5 text-amber-500" /> Switch Active Persona (Couple Demo Mode)
+      {/* Account Info */}
+      <div className="glass-panel p-6 rounded-3xl space-y-4 border border-[#EDE0D0] dark:border-[#3D352E]">
+        <h2 className="text-lg font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium flex items-center gap-2">
+          <UserCheck className="w-5 h-5 text-[#D4A857]" /> Switch Active Account
         </h2>
-        <p className="text-xs font-sans text-stone-500">
-          Currently viewing as <strong>{PROFILES[currentUser].name}</strong> in {PROFILES[currentUser].city} {PROFILES[currentUser].flag}.
+        <p className="text-xs font-sans text-[#7A7267]">
+          Currently logged in as <strong>{PROFILES[currentUser]?.name || "Harit"}</strong> in {PROFILES[currentUser]?.city || "Ahmedabad"}.
         </p>
 
         <div className="grid grid-cols-2 gap-3 pt-1">
-          {(["Alex", "Sam"] as const).map((role) => (
+          {(["Harit", "Ameera"] as const).map((role) => (
             <button
               key={role}
               onClick={() => setCurrentUser(role)}
               className={`p-4 rounded-2xl border flex items-center gap-3 text-xs font-sans transition-all ${
                 currentUser === role
-                  ? "bg-amber-100 dark:bg-amber-950/60 border-amber-400 font-medium shadow-xs"
-                  : "bg-white/80 dark:bg-stone-800 border-stone-200 dark:border-stone-700 opacity-80"
+                  ? "bg-[#EDE0D0] dark:bg-[#3D352E] border-[#D4A857] font-medium shadow-xs"
+                  : "bg-white/80 dark:bg-[#2A241F] border-[#EDE0D0] dark:border-[#3D352E] opacity-80"
               }`}
             >
               <img src={PROFILES[role].avatar} alt={role} className="w-9 h-9 rounded-full object-cover" />
               <div className="text-left">
-                <p className="font-semibold text-stone-800 dark:text-stone-200">{PROFILES[role].name}</p>
-                <p className="text-[10px] text-stone-400">{PROFILES[role].city} {PROFILES[role].flag}</p>
+                <p className="font-semibold text-[#3A342C] dark:text-[#F7F3ED]">{PROFILES[role].name}</p>
+                <p className="text-[10px] text-[#7A7267]">{PROFILES[role].city} {PROFILES[role].flag}</p>
               </div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Theme & Fonts */}
-      <div className="glass-panel p-6 rounded-3xl space-y-4 border border-stone-200/80 dark:border-stone-800">
-        <h2 className="text-lg font-serif text-stone-800 dark:text-stone-100 font-medium flex items-center gap-2">
-          <Moon className="w-5 h-5 text-amber-500" /> Theme & Aesthetic
+      {/* Appearance Settings */}
+      <div className="glass-panel p-6 rounded-3xl space-y-4 border border-[#EDE0D0] dark:border-[#3D352E]">
+        <h2 className="text-lg font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium">
+          Appearance & Typography
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-sans text-xs">
-          <div className="p-4 rounded-2xl bg-white/70 dark:bg-stone-800/70 border border-stone-200 dark:border-stone-700 flex items-center justify-between">
-            <div>
-              <p className="font-medium text-stone-800 dark:text-stone-200">Dark Mode (Warm Charcoal)</p>
-              <p className="text-[10px] text-stone-400">Not pure black, soft warm stone tones</p>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className="px-4 py-2 rounded-xl bg-amber-500 text-white font-medium shadow-xs"
-            >
-              {theme === "light" ? "Enable Dark" : "Enable Light"}
-            </button>
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-white/70 dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E]">
+          <div>
+            <p className="text-xs font-sans font-medium text-[#3A342C] dark:text-[#F7F3ED]">Theme Mode</p>
+            <p className="text-[10px] font-sans text-[#7A7267]">Soft Cream (#FAF6F0) vs Warm Dark (#1E1A16)</p>
           </div>
+          <button
+            onClick={toggleTheme}
+            className="px-4 py-2 rounded-full bg-[#EDE0D0] dark:bg-[#3D352E] text-xs font-sans font-semibold flex items-center gap-2 cursor-pointer"
+          >
+            {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-[#D4A857]" />}
+            <span>{theme === "light" ? "Switch to Warm Dark" : "Switch to Soft Cream"}</span>
+          </button>
+        </div>
 
-          <div className="p-4 rounded-2xl bg-white/70 dark:bg-stone-800/70 border border-stone-200 dark:border-stone-700 flex items-center justify-between">
-            <div>
-              <p className="font-medium text-stone-800 dark:text-stone-200">Typography Font Style</p>
-              <p className="text-[10px] text-stone-400">Serif romantic vs Modern Sans</p>
-            </div>
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-white/70 dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E]">
+          <div>
+            <p className="text-xs font-sans font-medium text-[#3A342C] dark:text-[#F7F3ED]">Letter Font Style</p>
+            <p className="text-[10px] font-sans text-[#7A7267]">Elegant Serif vs Modern Sans-Serif</p>
+          </div>
+          <div className="flex gap-2">
             <button
-              onClick={() => setFontStyle(fontStyle === "serif" ? "sans" : "serif")}
-              className="px-4 py-2 rounded-xl bg-amber-500 text-white font-medium shadow-xs"
+              onClick={() => setFontStyle("serif")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-serif ${
+                fontStyle === "serif"
+                  ? "bg-[#D4A857] text-white font-semibold shadow-xs"
+                  : "bg-white dark:bg-[#2A241F] text-[#7A7267]"
+              }`}
             >
-              {fontStyle === "serif" ? "Use Sans" : "Use Serif"}
+              Serif
+            </button>
+            <button
+              onClick={() => setFontStyle("sans")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-sans ${
+                fontStyle === "sans"
+                  ? "bg-[#D4A857] text-white font-semibold shadow-xs"
+                  : "bg-white dark:bg-[#2A241F] text-[#7A7267]"
+              }`}
+            >
+              Sans
             </button>
           </div>
         </div>
       </div>
 
-      {/* Export & PWA */}
-      <div className="glass-panel p-6 rounded-3xl space-y-4 border border-stone-200/80 dark:border-stone-800">
-        <h2 className="text-lg font-serif text-stone-800 dark:text-stone-100 font-medium flex items-center gap-2">
-          <Download className="w-5 h-5 text-amber-500" /> Backup & Progressive Web App (PWA)
+      {/* Data Management */}
+      <div className="glass-panel p-6 rounded-3xl space-y-4 border border-[#EDE0D0] dark:border-[#3D352E]">
+        <h2 className="text-lg font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium">
+          Data Backup & Management
         </h2>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 font-sans text-xs pt-1">
-          <div>
-            <p className="font-medium text-stone-800 dark:text-stone-200">Export All Shared Memories</p>
-            <p className="text-stone-400">Download a full JSON archive of all letters, dinners, and notes.</p>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleExportData}
-            className="px-5 py-2.5 rounded-xl bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-medium flex items-center gap-2 shadow-xs shrink-0"
+            className="flex-1 p-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-sans font-semibold flex items-center justify-center gap-2 shadow-xs cursor-pointer"
           >
-            <Download className="w-4 h-4" /> Download Backup JSON
+            <Download className="w-4 h-4" /> Export All Data (JSON Backup)
+          </button>
+          <button
+            onClick={handleReset}
+            className="flex-1 p-3.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-sans font-semibold flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" /> Reset All Local Data
           </button>
         </div>
       </div>

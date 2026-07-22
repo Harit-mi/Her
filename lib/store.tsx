@@ -106,7 +106,7 @@ const SunriseContext = createContext<SunriseContextType | undefined>(undefined);
 
 export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
-  const [loggedInUser, setLoggedInUser] = useState<UserRole>("Sam");
+  const [loggedInUser, setLoggedInUser] = useState<UserRole>("Harit");
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [fontStyle, setFontStyle] = useState<"serif" | "sans">("serif");
   const [showSunriseModal, setShowSunriseModal] = useState<boolean>(false);
@@ -128,13 +128,15 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const [playlist, setPlaylist] = useState<PlaylistSongItem[]>(INITIAL_PLAYLIST);
   const [dailyMission, setDailyMission] = useState<DailyMissionItem>(INITIAL_DAILY_MISSION);
 
-  // Load state from localStorage on mount
+  // Load state from localStorage safely on mount
   useEffect(() => {
     try {
       const savedAuth = localStorage.getItem("sunrise_auth_user");
-      if (savedAuth === "Alex" || savedAuth === "Sam") {
+      if (savedAuth === "Harit" || savedAuth === "Ameera") {
         setLoggedInUser(savedAuth);
         setIsLoggedIn(true);
+      } else {
+        setLoggedInUser("Harit");
       }
 
       const savedTheme = localStorage.getItem("sunrise_theme");
@@ -142,21 +144,6 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
 
       const l = localStorage.getItem("sunrise_letters");
       if (l) setLetters(JSON.parse(l));
-
-      const d = localStorage.getItem("sunrise_dinners");
-      if (d) setDinners(JSON.parse(d));
-
-      const g = localStorage.getItem("sunrise_gratitudes");
-      if (g) setGratitudes(JSON.parse(g));
-
-      const m = localStorage.getItem("sunrise_memories");
-      if (m) setMemories(JSON.parse(m));
-
-      const v = localStorage.getItem("sunrise_voicenotes");
-      if (v) setVoiceNotes(JSON.parse(v));
-
-      const w = localStorage.getItem("sunrise_wishes");
-      if (w) setWishes(JSON.parse(w));
     } catch {
       // fallback
     }
@@ -172,15 +159,10 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       }
       localStorage.setItem("sunrise_theme", theme);
       localStorage.setItem("sunrise_letters", JSON.stringify(letters));
-      localStorage.setItem("sunrise_dinners", JSON.stringify(dinners));
-      localStorage.setItem("sunrise_gratitudes", JSON.stringify(gratitudes));
-      localStorage.setItem("sunrise_memories", JSON.stringify(memories));
-      localStorage.setItem("sunrise_voicenotes", JSON.stringify(voiceNotes));
-      localStorage.setItem("sunrise_wishes", JSON.stringify(wishes));
     } catch {
       // fallback
     }
-  }, [isLoggedIn, loggedInUser, theme, letters, dinners, gratitudes, memories, voiceNotes, wishes]);
+  }, [isLoggedIn, loggedInUser, theme, letters]);
 
   const login = (user: UserRole) => {
     setLoggedInUser(user);
@@ -386,8 +368,8 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const toggleMission = (user: UserRole) => {
     setDailyMission((prev) => ({
       ...prev,
-      completedByAlex: user === "Alex" ? !prev.completedByAlex : prev.completedByAlex,
-      completedBySam: user === "Sam" ? !prev.completedBySam : prev.completedBySam,
+      completedByAlex: user === "Harit" ? !prev.completedByAlex : prev.completedByAlex,
+      completedBySam: user === "Ameera" ? !prev.completedBySam : prev.completedBySam,
     }));
   };
 
@@ -410,8 +392,10 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Helper variables
+  const activeUser = loggedInUser === "Harit" || loggedInUser === "Ameera" ? loggedInUser : "Harit";
+
   const unreadLetterForCurrent = letters.find(
-    (l) => l.recipient === loggedInUser && !l.isRead
+    (l) => l.recipient === activeUser && !l.isRead
   );
 
   const latestLetter = letters[0];
@@ -424,8 +408,8 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
     <SunriseContext.Provider
       value={{
         isLoggedIn,
-        loggedInUser,
-        currentUser: loggedInUser,
+        loggedInUser: activeUser,
+        currentUser: activeUser,
         setCurrentUser: setLoggedInUser,
         login,
         logout,

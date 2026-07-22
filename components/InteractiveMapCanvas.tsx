@@ -1,104 +1,65 @@
 "use client";
 
 import React from "react";
-import { MapPin, Compass, Thermometer, Clock, Train } from "lucide-react";
 import { PROFILES } from "@/lib/initialData";
+import { MapPin, Navigation, Train } from "lucide-react";
 
 export default function InteractiveMapCanvas() {
-  const alex = PROFILES["Alex"];
-  const sam = PROFILES["Sam"];
+  const harit = PROFILES["Harit"];
+  const ameera = PROFILES["Ameera"];
 
   return (
-    <div className="glass-panel p-6 sm:p-8 rounded-3xl space-y-6 border border-stone-200/80 dark:border-stone-800 relative overflow-hidden">
-      {/* Background Decorative Grid */}
-      <div className="absolute inset-0 bg-[radial-gradient(#D9A752_1px,transparent_1px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="glass-panel p-6 rounded-3xl space-y-4 border border-[#EDE0D0] dark:border-[#3D352E]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <span className="text-[10px] font-sans uppercase tracking-widest px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-semibold">
-            Interactive Inter-State Map
-          </span>
-          <h2 className="text-2xl font-serif text-stone-800 dark:text-stone-100 font-medium mt-1">
-            Gujarat 🇮🇳 & Maharashtra 🇮🇳
-          </h2>
-          <p className="text-xs font-sans text-stone-500">
-            Ahmedabad to Mumbai • 520 Kilometers (~5.5 hrs by Vande Bharat 🚆)
+          <h3 className="text-xl font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium flex items-center gap-2">
+            <Navigation className="w-5 h-5 text-[#D4A857]" /> Gujarat 🇮🇳 ↔ Maharashtra 🇮🇳 Connection
+          </h3>
+          <p className="text-xs font-sans text-[#7A7267]">
+            Vande Bharat Express route (520 km) • Indian Standard Time (IST)
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 rounded-full bg-white/80 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs font-sans text-stone-600 dark:text-stone-300 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-amber-500" /> Same Timezone (IST 🇮🇳)
-          </div>
-        </div>
+        <span className="text-xs font-sans font-semibold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-200 self-start sm:self-auto flex items-center gap-1">
+          <Train className="w-3.5 h-3.5 text-emerald-600" /> Route Active
+        </span>
       </div>
 
-      {/* Visual Canvas Map Graphic */}
-      <div className="relative w-full h-64 sm:h-72 bg-gradient-to-r from-stone-900 via-stone-950 to-stone-900 rounded-2xl p-4 flex items-center justify-between border border-stone-800 shadow-inner overflow-hidden">
-        {/* Animated Flight/Train Path Curve SVG */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.8" />
-              <stop offset="50%" stopColor="#EC4899" stopOpacity="1" />
-              <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.8" />
-            </linearGradient>
-          </defs>
-
-          {/* Curved connection line */}
+      {/* SVG Canvas Map */}
+      <div className="relative w-full h-64 rounded-2xl bg-[#EDE0D0]/30 dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] overflow-hidden flex items-center justify-center p-4">
+        <svg className="w-full h-full" viewBox="0 0 500 220" fill="none">
+          {/* Glowing Animated Route Path */}
           <path
-            d="M 60,180 Q 300,40 540,180"
-            fill="none"
-            stroke="url(#glow)"
+            d="M 120,70 Q 250,110 380,150"
+            stroke="#D4A857"
             strokeWidth="3"
-            strokeDasharray="6,6"
+            strokeDasharray="6 6"
             className="animate-pulse"
           />
 
-          {/* Moving dot */}
-          <circle r="4" fill="#FBBF24">
-            <animateMotion path="M 60,180 Q 300,40 540,180" dur="6s" repeatCount="indefinite" />
-          </circle>
+          {/* Harit Pin - Ahmedabad, Gujarat */}
+          <g transform="translate(120, 70)">
+            <circle r="14" fill="#D4A857" fillOpacity="0.3" className="animate-ping" />
+            <circle r="8" fill="#D4A857" />
+            <text x="0" y="-18" textAnchor="middle" fill="#3A342C" className="text-[11px] font-bold font-sans dark:fill-[#F7F3ED]">
+              {harit.name} ({harit.city}, {harit.state} 🇮🇳)
+            </text>
+          </g>
+
+          {/* Ameera Pin - Mumbai, Maharashtra */}
+          <g transform="translate(380, 150)">
+            <circle r="14" fill="#3B82F6" fillOpacity="0.3" className="animate-ping" />
+            <circle r="8" fill="#3B82F6" />
+            <text x="0" y="24" textAnchor="middle" fill="#3A342C" className="text-[11px] font-bold font-sans dark:fill-[#F7F3ED]">
+              {ameera.name} ({ameera.city}, {ameera.state} 🇮🇳)
+            </text>
+          </g>
         </svg>
 
-        {/* Ahmedabad, Gujarat City Card */}
-        <div className="relative z-10 p-4 rounded-2xl bg-stone-900/90 border border-amber-500/40 text-amber-100 max-w-[160px] sm:max-w-[200px] shadow-lg space-y-1 backdrop-blur-md">
-          <div className="flex items-center gap-1.5 text-xs font-sans font-medium text-amber-400">
-            <MapPin className="w-4 h-4" /> {alex.name} in {alex.city} 🇮🇳
-          </div>
-          <p className="text-xl font-serif text-white font-normal">1:45 AM 🌙</p>
-          <div className="flex items-center gap-1 text-[11px] font-sans text-stone-400">
-            <Thermometer className="w-3 h-3 text-amber-400" /> 29°C • Soft Monsoon
-          </div>
-          <p className="text-[10px] text-stone-500 font-mono pt-1">Gujarat State</p>
+        {/* Distance Pill */}
+        <div className="absolute top-4 right-4 glass-panel px-3 py-1.5 rounded-full text-xs font-sans font-medium text-[#3A342C] dark:text-[#F7F3ED] shadow-xs">
+          📍 Distance: 520 km
         </div>
-
-        {/* Center Distance Badge */}
-        <div className="relative z-10 hidden sm:flex flex-col items-center justify-center p-3.5 rounded-full bg-stone-900/90 border border-stone-700 text-stone-300 text-xs font-sans text-center shadow-xl backdrop-blur-md">
-          <Train className="w-5 h-5 text-amber-400 animate-pulse" />
-          <span className="font-semibold text-amber-300 text-[11px] mt-1">520 km</span>
-          <span className="text-[9px] text-stone-400">Coastal Route</span>
-        </div>
-
-        {/* Mumbai, Maharashtra City Card */}
-        <div className="relative z-10 p-4 rounded-2xl bg-stone-900/90 border border-blue-500/40 text-blue-100 max-w-[160px] sm:max-w-[200px] shadow-lg space-y-1 backdrop-blur-md text-right">
-          <div className="flex items-center justify-end gap-1.5 text-xs font-sans font-medium text-blue-400">
-            {sam.name} in {sam.city} 🇮🇳 <MapPin className="w-4 h-4" />
-          </div>
-          <p className="text-xl font-serif text-white font-normal">1:45 AM 🌙</p>
-          <div className="flex items-center justify-end gap-1 text-[11px] font-sans text-stone-400">
-            27°C • Sea Breeze 🌊 <Thermometer className="w-3 h-3 text-amber-400" />
-          </div>
-          <p className="text-[10px] text-stone-500 font-mono pt-1">Maharashtra State</p>
-        </div>
-      </div>
-
-      {/* Romantic Quote Footer */}
-      <div className="text-center py-2">
-        <p className="text-sm font-serif italic text-stone-700 dark:text-stone-300">
-          "From the banks of Sabarmati to the shores of the Arabian Sea, dinner is still together." 🍷
-        </p>
       </div>
     </div>
   );
