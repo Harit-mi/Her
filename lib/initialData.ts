@@ -55,7 +55,7 @@ export const INITIAL_VOICE_NOTES: VoiceNoteItem[] = [];
 export const INITIAL_WISHES: WishItem[] = [
   {
     id: "wish-1",
-    title: "Take train trip together from Ahmedabad to Nashik 🚆",
+    title: "Reunion trip together in Mumbai 🚆",
     category: "Travel",
     completed: false,
     addedBy: "Ameera",
@@ -74,7 +74,7 @@ export const INITIAL_SURPRISES: SurpriseItem[] = [];
 export const INITIAL_COUNTDOWNS: CountdownItem[] = [
   {
     id: "cd-1",
-    title: "Reunion in Nashik 🚆",
+    title: "Reunion in Mumbai 🚆",
     targetDate: "2026-08-15T10:00:00Z",
     category: "Visit",
     icon: "🚆",
