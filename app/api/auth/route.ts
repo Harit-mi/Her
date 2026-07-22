@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const cleanEmail = email.trim().toLowerCase();
     const allowlist = themeTokens.allowlistEmails;
 
-    // Strict Server-Side Allowlist Enforcement
+    // Exact Match Server-Side Allowlist Enforcement
     if (!allowlist.includes(cleanEmail)) {
       return NextResponse.json(
         { error: "Access denied. Private space restricted to Harit & Ameera only.", status: "UNAUTHORIZED" },

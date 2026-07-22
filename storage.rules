@@ -1,22 +1,18 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-    
+
     function isWhitelistedCouple() {
       return request.auth != null && (
-        request.auth.token.email.matches('.*harit.*') || 
-        request.auth.token.email.matches('.*ameera.*')
+        request.auth.token.email == 'haritmishra123@gmail.com' ||
+        request.auth.token.email == 'shethameera@gmail.com'
       );
     }
 
     match /{allPaths=**} {
-      // Separate read rule (request.resource is NOT defined on read operations)
       allow read: if isWhitelistedCouple();
-
-      // Separate write rule (request.resource IS defined on write operations)
       allow write: if isWhitelistedCouple() &&
-        request.resource.size < 10 * 1024 * 1024; // 10MB max file size limit
+        request.resource.size < 10 * 1024 * 1024;
     }
   }
 }

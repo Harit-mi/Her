@@ -11,7 +11,7 @@ import confetti from "canvas-confetti";
 export default function LoginModal() {
   const { isLoggedIn, login } = useSunriseStore();
   const [selectedRole, setSelectedRole] = useState<UserRole>("Harit");
-  const [email, setEmail] = useState("harit@gmail.com");
+  const [email, setEmail] = useState("haritmishra123@gmail.com");
   const [password, setPassword] = useState("••••••••");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -19,7 +19,7 @@ export default function LoginModal() {
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
-    setEmail(role === "Harit" ? "harit@gmail.com" : "ameera@gmail.com");
+    setEmail(role === "Harit" ? "haritmishra123@gmail.com" : "shethameera@gmail.com");
     setErrorMsg(null);
   };
 
@@ -27,12 +27,10 @@ export default function LoginModal() {
     e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
 
-    // Verify against configurable allowlist (supports real Gmail addresses)
-    const isAllowed = themeTokens.allowlistEmails.some(
-      (allowed) => cleanEmail.includes(allowed) || allowed.includes(cleanEmail)
-    );
+    // Exact Match Allowlist Check
+    const isAllowed = themeTokens.allowlistEmails.includes(cleanEmail);
 
-    if (!isAllowed && !themeTokens.allowlistEmails.includes(cleanEmail)) {
+    if (!isAllowed) {
       setErrorMsg(`Access denied. ${cleanEmail} is not in the Whitelisted Couple Allowlist.`);
       return;
     }
@@ -111,7 +109,7 @@ export default function LoginModal() {
                   setEmail(e.target.value);
                   setErrorMsg(null);
                 }}
-                placeholder="e.g. harit@gmail.com"
+                placeholder="e.g. haritmishra123@gmail.com"
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] text-xs focus:ring-2 focus:ring-[#D4A857] focus:outline-none text-[#3A342C] dark:text-[#F7F3ED]"
                 required
               />
