@@ -1,0 +1,16 @@
+{
+  "name": "Sunrise",
+  "short_name": "Sunrise",
+  "description": "A private digital space shared between two people who live in different cities.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#FAF7F2",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
