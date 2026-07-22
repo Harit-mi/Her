@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { useSunriseStore } from "@/lib/store";
 import { PROFILES } from "@/lib/initialData";
 import { UserRole } from "@/lib/types";
+import { auth, googleProvider } from "@/lib/firebase";
+import { signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { Lock, Mail, ShieldCheck, UserCheck, AlertCircle } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -11,7 +13,7 @@ export default function LoginModal() {
   const { isLoggedIn, login } = useSunriseStore();
   const [selectedRole, setSelectedRole] = useState<UserRole>("Harit");
   const [email, setEmail] = useState("haritmishra123@gmail.com");
-  const [password, setPassword] = useState("••••••••");
+  const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
@@ -23,58 +25,95 @@ export default function LoginModal() {
     setErrorMsg(null);
   };
 
-  const handleAuthWithFirebaseToken = async (targetRole: UserRole, targetEmail: string) => {
+  // Real Google Sign-In with Popup via Firebase Client SDK
+  const handleRealGoogleSignIn = async () => {
     setIsVerifying(true);
     setErrorMsg(null);
 
     try {
-      // Generate client-side Firebase ID Token JWT
-      const header = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-      const payload = btoa(
-        JSON.stringify({
-          email: targetEmail.trim().toLowerCase(),
-          iss: "https://securetoken.google.com/sunrise-app",
-          exp: Math.floor(Date.now() / 1000) + 3600,
-        })
-      );
-      const mockSignedIdToken = `${header}.${payload}.client_signature`;
+      // 1. Trigger real Google OAuth popup via Firebase Client SDK
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
 
-      // Send Firebase ID Token to Server API for Verification
+      // 2. Extract genuine, cryptographically signed Firebase ID token (JWT) from Google OAuth
+      const realIdToken = await user.getIdToken();
+
+      // 3. Send real ID Token to Server API for verification
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${mockSignedIdToken}`,
+          Authorization: `Bearer ${realIdToken}`,
         },
-        body: JSON.stringify({ idToken: mockSignedIdToken }),
+        body: JSON.stringify({ idToken: realIdToken }),
       });
 
       const data = await res.json().catch(() => ({ error: `HTTP ${res.status} ${res.statusText}` }));
 
       if (!res.ok || !data.success) {
-        const detailMsg = data.error || data.details || `HTTP ${res.status} Verification Error`;
-        setErrorMsg(`[Auth Failed ${res.status}]: ${detailMsg}`);
+        setErrorMsg(`[Server Auth Failed ${res.status}]: ${data.error || "Access Denied"}`);
         setIsVerifying(false);
         return;
       }
 
-      // Successfully authenticated via Server-Side Firebase Admin Token Verification
-      login(targetRole);
-      confetti({
-        particleCount: 40,
-        spread: 60,
-        origin: { y: 0.6 },
-      });
+      // 4. Verification Succeeded
+      const userRole: UserRole = data.user || selectedRole;
+      login(userRole);
+      confetti({ particleCount: 40, spread: 60, origin: { y: 0.6 } });
     } catch (err: any) {
-      setErrorMsg(`[Client Error]: ${err?.message || "Failed to reach /api/auth endpoint"}`);
+      if (err.code === "auth/popup-closed-by-user") {
+        setErrorMsg("Google Sign-In popup was closed before completing.");
+      } else if (err.code === "auth/unauthorized-domain") {
+        setErrorMsg("This domain is not authorized in Firebase Console → Auth Settings → Authorized Domains.");
+      } else {
+        setErrorMsg(`[Firebase Auth Error]: ${err.message || "Failed to complete Google Sign-In"}`);
+      }
     } finally {
       setIsVerifying(false);
     }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  // Real Email / Password Login via Firebase Auth
+  const handleEmailPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    handleAuthWithFirebaseToken(selectedRole, email);
+    setIsVerifying(true);
+    setErrorMsg(null);
+
+    try {
+      // If user enters password, authenticate with real Firebase Auth email/password credentials
+      if (password && password.length >= 6) {
+        const userCred = await signInWithEmailAndPassword(auth, email.trim(), password);
+        const realIdToken = await userCred.user.getIdToken();
+
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${realIdToken}`,
+          },
+          body: JSON.stringify({ idToken: realIdToken }),
+        });
+
+        const data = await res.json().catch(() => ({ error: `HTTP ${res.status} ${res.statusText}` }));
+
+        if (!res.ok || !data.success) {
+          setErrorMsg(`[Auth Failed ${res.status}]: ${data.error || "Access Denied"}`);
+          setIsVerifying(false);
+          return;
+        }
+
+        login(selectedRole);
+        confetti({ particleCount: 40, spread: 60, origin: { y: 0.6 } });
+        return;
+      }
+
+      // If no custom credentials supplied, perform real Google Sign-In popup
+      await handleRealGoogleSignIn();
+    } catch (err: any) {
+      setErrorMsg(`[Login Error]: ${err.message || "Invalid credentials"}`);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return (
@@ -122,7 +161,7 @@ export default function LoginModal() {
           </div>
         </div>
 
-        {/* Detailed Error State Display for Debugging */}
+        {/* Detailed Error State Display */}
         {errorMsg && (
           <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-sans flex items-start gap-2 break-all">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -131,7 +170,7 @@ export default function LoginModal() {
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleLoginSubmit} className="space-y-4 font-sans text-xs">
+        <form onSubmit={handleEmailPasswordSubmit} className="space-y-4 font-sans text-xs">
           <div>
             <label className="text-[#7A7267] font-medium">Google / Gmail Address</label>
             <div className="relative mt-1">
@@ -151,14 +190,14 @@ export default function LoginModal() {
           </div>
 
           <div>
-            <label className="text-[#7A7267] font-medium">Password</label>
+            <label className="text-[#7A7267] font-medium">Password (Optional if using Google OAuth)</label>
             <div className="relative mt-1">
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password or use Google Sign-In"
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] text-xs focus:ring-2 focus:ring-[#D4A857] focus:outline-none text-[#3A342C] dark:text-[#F7F3ED]"
-                required
               />
               <Lock className="w-4 h-4 text-[#7A7267] absolute left-3 top-3" />
             </div>
@@ -167,30 +206,30 @@ export default function LoginModal() {
           {/* Login Buttons */}
           <div className="space-y-2 pt-2">
             <button
-              type="submit"
+              type="button"
               disabled={isVerifying}
+              onClick={handleRealGoogleSignIn}
               className="w-full py-3 rounded-full bg-[#D4A857] hover:bg-[#c39746] text-white font-sans text-xs font-semibold shadow-md hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <UserCheck className="w-4 h-4" />{" "}
+              <span>🌐</span>{" "}
               {isVerifying
-                ? "Verifying Firebase ID Token..."
-                : `Sign In as ${PROFILES[selectedRole].name} (${PROFILES[selectedRole].city})`}
+                ? "Opening Google Sign-In Popup..."
+                : `Sign In with Google Account (${PROFILES[selectedRole].name})`}
             </button>
 
             <button
-              type="button"
+              type="submit"
               disabled={isVerifying}
-              onClick={() => handleAuthWithFirebaseToken(selectedRole, email)}
               className="w-full py-2.5 rounded-full bg-white dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] text-[#3A342C] dark:text-[#F7F3ED] text-xs font-sans font-medium flex items-center justify-center gap-2 hover:bg-[#EDE0D0]/50 cursor-pointer disabled:opacity-50"
             >
-              <span>🌐</span> Continue with Google Account ({selectedRole})
+              <UserCheck className="w-4 h-4" /> Sign In as {PROFILES[selectedRole].name} ({PROFILES[selectedRole].city})
             </button>
           </div>
         </form>
 
         <div className="text-center pt-1 border-t border-[#EDE0D0] dark:border-[#3D352E]">
           <p className="text-[10px] font-sans text-[#7A7267] flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Firebase Admin JWT Verification Enabled
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Real Firebase OAuth &amp; Admin JWT Active
           </p>
         </div>
       </div>
