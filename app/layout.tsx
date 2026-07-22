@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SunriseProvider } from "@/lib/store";
-import UserSwitcher from "@/components/UserSwitcher";
-import Navbar from "@/components/Navbar";
-import LoginModal from "@/components/LoginModal";
+import AuthGuard from "@/components/AuthGuard";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import Script from "next/script";
 
@@ -46,12 +44,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col selection:bg-[#EDE0D0] selection:text-[#3A342C]">
         <SunriseProvider>
-          <header className="sticky top-0 z-30 bg-[#FAF6F0]/80 dark:bg-[#1E1A16]/80 backdrop-blur-md border-b border-[#EDE0D0]/60 dark:border-[#3D352E]/60">
-            <UserSwitcher />
-          </header>
-          <main className="flex-1 pb-24 pt-4">{children}</main>
-          <Navbar />
-          <LoginModal />
+          <AuthGuard>{children}</AuthGuard>
           <PWAInstallPrompt />
         </SunriseProvider>
 
