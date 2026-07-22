@@ -105,7 +105,7 @@ interface SunriseContextType {
 const SunriseContext = createContext<SunriseContextType | undefined>(undefined);
 
 export function SunriseProvider({ children }: { children: React.ReactNode }) {
-  // Security Default: Unauthenticated by default
+  // Strict Security Default: Unauthenticated by default
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [loggedInUser, setLoggedInUser] = useState<UserRole>("Harit");
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -129,17 +129,9 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const [playlist, setPlaylist] = useState<PlaylistSongItem[]>(INITIAL_PLAYLIST);
   const [dailyMission, setDailyMission] = useState<DailyMissionItem>(INITIAL_DAILY_MISSION);
 
-  // Load state from localStorage safely on mount with automatic state migration
+  // Verify server session on mount (do NOT auto-authenticate from unverified localStorage)
   useEffect(() => {
     try {
-      const savedAuth = localStorage.getItem("sunrise_auth_user");
-      if (savedAuth === "Harit" || savedAuth === "Ameera") {
-        setLoggedInUser(savedAuth);
-        setIsLoggedIn(true);
-      } else {
-        setIsLoggedIn(false);
-      }
-
       const savedTheme = localStorage.getItem("sunrise_theme");
       if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
 
@@ -149,7 +141,6 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       const cd = localStorage.getItem("sunrise_countdowns");
       if (cd) {
         const parsed: CountdownItem[] = JSON.parse(cd);
-        // Automatically migrate any old "Reunion in Nashik" entry to "Reunion in Mumbai 🚆"
         const updated = parsed.map((item) =>
           item.title.toLowerCase().includes("nashik")
             ? { ...item, title: "Reunion in Mumbai 🚆", targetDate: "2026-08-15T10:00:00Z" }
@@ -164,21 +155,16 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Save to LocalStorage
+  // Save state
   useEffect(() => {
     try {
-      if (isLoggedIn) {
-        localStorage.setItem("sunrise_auth_user", loggedInUser);
-      } else {
-        localStorage.removeItem("sunrise_auth_user");
-      }
       localStorage.setItem("sunrise_theme", theme);
       localStorage.setItem("sunrise_letters", JSON.stringify(letters));
       localStorage.setItem("sunrise_countdowns", JSON.stringify(countdowns));
     } catch {
       // fallback
     }
-  }, [isLoggedIn, loggedInUser, theme, letters, countdowns]);
+  }, [theme, letters, countdowns]);
 
   const login = (user: UserRole) => {
     setLoggedInUser(user);
