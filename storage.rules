@@ -11,7 +11,11 @@ service firebase.storage {
     }
 
     match /{allPaths=**} {
-      allow read, write: if isWhitelistedCouple() &&
+      // Separate read rule (request.resource is NOT defined on read operations)
+      allow read: if isWhitelistedCouple();
+
+      // Separate write rule (request.resource IS defined on write operations)
+      allow write: if isWhitelistedCouple() &&
         request.resource.size < 10 * 1024 * 1024; // 10MB max file size limit
     }
   }
