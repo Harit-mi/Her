@@ -49,10 +49,11 @@ export default function LoginModal() {
         body: JSON.stringify({ idToken: mockSignedIdToken }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: `HTTP ${res.status} ${res.statusText}` }));
 
       if (!res.ok || !data.success) {
-        setErrorMsg(data.error || "Authentication failed.");
+        const detailMsg = data.error || data.details || `HTTP ${res.status} Verification Error`;
+        setErrorMsg(`[Auth Failed ${res.status}]: ${detailMsg}`);
         setIsVerifying(false);
         return;
       }
@@ -64,8 +65,8 @@ export default function LoginModal() {
         spread: 60,
         origin: { y: 0.6 },
       });
-    } catch {
-      setErrorMsg("Network or authentication server error.");
+    } catch (err: any) {
+      setErrorMsg(`[Client Error]: ${err?.message || "Failed to reach /api/auth endpoint"}`);
     } finally {
       setIsVerifying(false);
     }
@@ -121,10 +122,10 @@ export default function LoginModal() {
           </div>
         </div>
 
-        {/* Calm Error State */}
+        {/* Detailed Error State Display for Debugging */}
         {errorMsg && (
-          <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-sans flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-sans flex items-start gap-2 break-all">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
         )}
