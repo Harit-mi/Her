@@ -7,6 +7,7 @@ import SunriseAnimation from "@/components/SunriseAnimation";
 import RandomMemoryModal from "@/components/RandomMemoryModal";
 import LiveCountdown from "@/components/LiveCountdown";
 import SunriseSVGIllustration from "@/components/SunriseSVGIllustration";
+import LoginModal from "@/components/LoginModal";
 import Link from "next/link";
 import {
   Mail,
@@ -24,6 +25,7 @@ import confetti from "canvas-confetti";
 
 export default function Home() {
   const {
+    isLoggedIn,
     currentUser,
     unreadLetterForCurrent,
     dinners,
@@ -33,6 +35,12 @@ export default function Home() {
     toggleMission,
     countdowns,
   } = useSunriseStore();
+
+  // SERVER / CLIENT AUTH GUARD: If not logged in, render ONLY the Login Card.
+  // Zero private data (cities, names, letters, dinners) is output to unauthenticated users.
+  if (!isLoggedIn) {
+    return <LoginModal />;
+  }
 
   const userProfile = PROFILES[currentUser] || PROFILES["Harit"];
   const partnerProfile = PROFILES[currentUser === "Harit" ? "Ameera" : "Harit"];
@@ -196,7 +204,9 @@ export default function Home() {
               Shared Meals Milestone
             </p>
             <h3 className="text-xl font-serif text-[#3A342C] dark:text-[#F7F3ED] font-normal">
-              "We've shared {totalDinners} dinners together."
+              {totalDinners > 0
+                ? `"We've shared ${totalDinners} dinners together."`
+                : "Log your very first shared dinner date together!"}
             </h3>
             <p className="text-xs text-[#7A7267] dark:text-[#B0A79C] font-sans mt-0.5">
               Cooked or ordered across Gujarat & Maharashtra over video calls.

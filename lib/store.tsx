@@ -105,14 +105,15 @@ interface SunriseContextType {
 const SunriseContext = createContext<SunriseContextType | undefined>(undefined);
 
 export function SunriseProvider({ children }: { children: React.ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
+  // Security Default: Unauthenticated by default
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [loggedInUser, setLoggedInUser] = useState<UserRole>("Harit");
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [fontStyle, setFontStyle] = useState<"serif" | "sans">("serif");
   const [showSunriseModal, setShowSunriseModal] = useState<boolean>(false);
   const [showRandomMemoryModal, setShowRandomMemoryModal] = useState<boolean>(false);
 
-  // Data state
+  // Data state (starts clean)
   const [letters, setLetters] = useState<Letter[]>(INITIAL_LETTERS);
   const [dinners, setDinners] = useState<DinnerItem[]>(INITIAL_DINNERS);
   const [gratitudes, setGratitudes] = useState<GratitudeNote[]>(INITIAL_GRATITUDES);
@@ -136,7 +137,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
         setLoggedInUser(savedAuth);
         setIsLoggedIn(true);
       } else {
-        setLoggedInUser("Harit");
+        setIsLoggedIn(false);
       }
 
       const savedTheme = localStorage.getItem("sunrise_theme");
@@ -145,7 +146,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       const l = localStorage.getItem("sunrise_letters");
       if (l) setLetters(JSON.parse(l));
     } catch {
-      // fallback
+      setIsLoggedIn(false);
     }
   }, []);
 
@@ -171,6 +172,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     setIsLoggedIn(false);
+    localStorage.removeItem("sunrise_auth_user");
   };
 
   const toggleTheme = () => {

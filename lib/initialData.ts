@@ -12,7 +12,6 @@ import {
   SleepLogItem,
   BookQuoteItem,
   AnimeItem,
-  MoodLogItem,
   PlaylistSongItem,
   DailyMissionItem,
 } from "./types";
@@ -42,177 +41,16 @@ export const PROFILES: Record<"Harit" | "Ameera", UserProfile> = {
   },
 };
 
-export const INITIAL_LETTERS: Letter[] = [
-  {
-    id: "letter-1",
-    author: "Harit",
-    recipient: "Ameera",
-    title: "Quiet Rain in Gujarat & Thoughts of Ameera",
-    content: `Good morning my dearest Ameera ☀️
+// Clean initial start state for Harit & Ameera (0 dinners, 0 letters, clean slate)
+export const INITIAL_LETTERS: Letter[] = [];
 
-It is 1:45 AM here in Ahmedabad, Gujarat. A gentle monsoon drizzle is tapping against my window near the Sabarmati Riverfront, and the cool night breeze feels so peaceful.
+export const INITIAL_DINNERS: DinnerItem[] = [];
 
-I cooked Kathiyawadi Sev Tameta and toasted warm Parathas tonight—remember that cute food stall near Marine Drive where we sat together? It wasn't quite as delicious without you teasing me about adding extra chilies!
+export const INITIAL_GRATITUDES: GratitudeNote[] = [];
 
-I hope you wake up in Mumbai, Maharashtra feeling rested and smiling as you read this. Don't rush your morning chai today; take a deep breath and know that even across 520 kilometers, you are the very first thought on my mind every morning and the last every night.
+export const INITIAL_MEMORIES: MemoryItem[] = [];
 
-Forever yours,
-Harit 💛`,
-    writtenAt: "1:45 AM 🌙",
-    dateStr: "July 23, 2026",
-    mood: "😌 Peaceful",
-    listeningTo: {
-      songTitle: "Tum Se Hi (Acoustic Piano)",
-      artist: "Pritam & Mohit Chauhan",
-      spotifyUrl: "https://open.spotify.com/track/7iN1WUdFiW4o3ikWjL34u9",
-    },
-    readingBook: {
-      title: "The Palace of Illusions",
-      author: "Chitra Banerjee Divakaruni",
-    },
-    watchingAnime: {
-      title: "Your Name (Kimi no Na wa)",
-      episode: "Movie",
-    },
-    photoUrls: [
-      "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?auto=format&fit=crop&w=800&q=80",
-    ],
-    voiceNoteUrl: "#",
-    themeColor: "from-amber-50 to-orange-50",
-    isRead: false,
-    reactions: [
-      { emoji: "❤️", by: "Ameera", timestamp: "7:02 AM" },
-      { emoji: "🥹", by: "Ameera", timestamp: "7:03 AM" },
-    ],
-    replies: [
-      {
-        id: "reply-1",
-        sender: "Ameera",
-        text: "This made me smile over my morning chai in Mumbai! I miss you so much Harit! Counting down the days until our Vande Bharat trip next month 🚆",
-        timestamp: "7:05 AM",
-      },
-    ],
-  },
-  {
-    id: "letter-2",
-    author: "Ameera",
-    recipient: "Harit",
-    title: "Mumbai Sunset at Bandra Stand & Arabian Sea Breeze",
-    content: `Dearest Harit,
-
-The sun just set over the Arabian Sea in Mumbai, painting the Maharashtra sky in vivid rose and warm amber. I walked along Bandra promenade after work and watched the monsoon waves crash against the shore.
-
-I kept thinking about how much you love the sea breeze here. I bought a small hand-carved wooden elephant today that reminded me of our trip to Gir Sanctuary in Gujarat!
-
-Sleep tight, my love. I will be dreaming of us walking along Atal Bridge at Kankaria Lake together soon.
-
-All my love,
-Ameera ✨`,
-    writtenAt: "11:30 PM 🌙",
-    dateStr: "July 22, 2026",
-    mood: "😊 Happy",
-    listeningTo: {
-      songTitle: "Kesariya",
-      artist: "Arijit Singh",
-      spotifyUrl: "https://open.spotify.com/track/6VhuP9959zpco7pG3o4g0C",
-    },
-    readingBook: {
-      title: "The Alchemist",
-      author: "Paulo Coelho",
-    },
-    watchingAnime: {
-      title: "Frieren: Beyond Journey's End",
-      episode: "Episode 12",
-    },
-    photoUrls: [
-      "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?auto=format&fit=crop&w=800&q=80",
-    ],
-    isRead: true,
-    reactions: [{ emoji: "❤️", by: "Harit", timestamp: "6:15 AM" }],
-    replies: [],
-  },
-];
-
-export const INITIAL_DINNERS: DinnerItem[] = [
-  {
-    id: "dinner-184",
-    number: 184,
-    date: "July 22, 2026",
-    foodName: "Virtual Paneer Butter Masala & FaceTime Candlelight",
-    type: "cooked",
-    rating: 5,
-    funnyMoment: "Harit set off the kitchen smoke alarm in Gujarat while roasting Naan, and Ameera laughed so hard in Maharashtra!",
-    imageUrl: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=800&q=80",
-    chef: "Harit & Ameera (Simultaneous Cook)",
-  },
-  {
-    id: "dinner-183",
-    number: 183,
-    date: "July 21, 2026",
-    foodName: "Swiggy Misal Pav & Gujju Dhokla Platter",
-    type: "ordered",
-    rating: 4,
-    funnyMoment: "We debated spicy Maharashtra Misal vs sweet Gujarati Kadhi for 45 minutes straight on video call.",
-    imageUrl: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=80",
-    chef: "Swiggy Special",
-  },
-];
-
-export const INITIAL_GRATITUDES: GratitudeNote[] = [
-  {
-    id: "gratitude-1",
-    author: "Ameera",
-    text: "Thank you for waiting to eat dinner with me over FaceTime even when you had a long day in Gujarat.",
-    timestamp: "Yesterday",
-    color: "bg-amber-100/90 text-amber-900 border-amber-200",
-  },
-  {
-    id: "gratitude-2",
-    author: "Harit",
-    text: "You sent me the sweetest voice note when you knew I was stressed about work.",
-    timestamp: "3 days ago",
-    color: "bg-rose-100/90 text-rose-900 border-rose-200",
-  },
-];
-
-export const INITIAL_MEMORIES: MemoryItem[] = [
-  {
-    id: "mem-1",
-    title: "Marine Drive Sunset Walk",
-    date: "November 14, 2025",
-    year: 2025,
-    month: "November",
-    category: "Trips",
-    mediaUrl: "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?auto=format&fit=crop&w=800&q=80",
-    mediaType: "image",
-    description: "Watching the Queen's Necklace lights light up the Mumbai coastline as the sun dipped into the Arabian Sea.",
-    location: "Marine Drive, Mumbai, Maharashtra",
-  },
-];
-
-export const INITIAL_VOICE_NOTES: VoiceNoteItem[] = [
-  {
-    id: "voice-1",
-    author: "Harit",
-    title: "Goodnight Rain & Gujarat Breeze",
-    duration: 48,
-    timestamp: "July 23, 2026 - 1:45 AM",
-    audioUrl: "",
-    waveform: [15, 30, 45, 80, 65, 40, 90, 100, 75, 50, 30, 60, 85, 40, 20, 55, 95, 70, 40, 15],
-    isMorningRead: false,
-  },
-  {
-    id: "voice-2",
-    author: "Ameera",
-    title: "Morning Mumbai Chai & Sea Waves",
-    duration: 35,
-    timestamp: "July 22, 2026 - 7:30 AM",
-    audioUrl: "",
-    waveform: [20, 50, 70, 40, 60, 85, 90, 65, 30, 70, 80, 55, 35, 45, 60, 75, 50, 30, 20, 10],
-    isMorningRead: true,
-  },
-];
+export const INITIAL_VOICE_NOTES: VoiceNoteItem[] = [];
 
 export const INITIAL_WISHES: WishItem[] = [
   {
@@ -224,24 +62,14 @@ export const INITIAL_WISHES: WishItem[] = [
   },
   {
     id: "wish-2",
-    title: "Explore Gir National Park & Wildlife Sanctuary in Gujarat 🦁",
+    title: "Explore Gir National Park in Gujarat 🦁",
     category: "Travel",
     completed: false,
     addedBy: "Harit",
   },
 ];
 
-export const INITIAL_SURPRISES: SurpriseItem[] = [
-  {
-    id: "surp-1",
-    from: "Harit",
-    title: "For your busy afternoon in Mumbai 🎁",
-    type: "Song",
-    content: "I recorded an acoustic guitar cover of 'Tum Se Hi' for you!",
-    mediaUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
-    isOpened: false,
-  },
-];
+export const INITIAL_SURPRISES: SurpriseItem[] = [];
 
 export const INITIAL_COUNTDOWNS: CountdownItem[] = [
   {
@@ -251,79 +79,22 @@ export const INITIAL_COUNTDOWNS: CountdownItem[] = [
     category: "Visit",
     icon: "🚆",
   },
-  {
-    id: "cd-2",
-    title: "Harit's Birthday 🎂",
-    targetDate: "2026-09-08T00:00:00Z",
-    category: "Birthday",
-    icon: "🎂",
-  },
 ];
 
-export const INITIAL_TIME_CAPSULES: TimeCapsuleItem[] = [
-  {
-    id: "tc-1",
-    author: "Harit",
-    title: "Open After Our 200th Shared Dinner 🍷",
-    letterContent: "If you're reading this, we have shared two hundred meals across Gujarat & Maharashtra! I wrote this on Dinner #50 when I realized I never want to eat dinner without you.",
-    unlockCondition: "200 Dinners",
-    unlockType: "dinners",
-    unlockDinnerCount: 200,
-    isUnlocked: false,
-  },
-];
+export const INITIAL_TIME_CAPSULES: TimeCapsuleItem[] = [];
 
-export const INITIAL_SLEEP_LOGS: SleepLogItem[] = [
-  {
-    id: "sleep-1",
-    user: "Harit",
-    date: "July 22",
-    goodnightTime: "01:45 AM",
-    wakeTime: "08:00 AM",
-    totalHours: 6.2,
-    qualityMood: "😴 Deep Sleep",
-  },
-];
+export const INITIAL_SLEEP_LOGS: SleepLogItem[] = [];
 
-export const INITIAL_BOOK_QUOTES: BookQuoteItem[] = [
-  {
-    id: "quote-1",
-    bookTitle: "The Palace of Illusions",
-    author: "Chitra Banerjee Divakaruni",
-    quote: "Love comes like a summer wind, unbidden and overwhelming.",
-    personalNote: "Thought of you while reading this chapter tonight in Gujarat.",
-    coverUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80",
-    dateAdded: "July 22, 2026",
-    addedBy: "Harit",
-  },
-];
+export const INITIAL_BOOK_QUOTES: BookQuoteItem[] = [];
 
-export const INITIAL_ANIME: AnimeItem[] = [
-  {
-    id: "anime-1",
-    title: "Your Name (Kimi no Na wa)",
-    status: "Completed",
-    rating: 5,
-    favoriteMoment: "When Taki and Mitsuha write their names on each other's hands during Twilight.",
-    coverUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=400&q=80",
-  },
-];
+export const INITIAL_ANIME: AnimeItem[] = [];
 
-export const INITIAL_PLAYLIST: PlaylistSongItem[] = [
-  {
-    id: "song-1",
-    title: "Tum Se Hi",
-    artist: "Pritam & Mohit Chauhan",
-    albumArt: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80",
-    note: "Our song from Marine Drive, Mumbai 🌊",
-    addedBy: "Ameera",
-  },
-];
+export const INITIAL_PLAYLIST: PlaylistSongItem[] = [];
 
 export const INITIAL_DAILY_MISSION: DailyMissionItem = {
   id: "mission-today",
   date: "July 23, 2026",
   text: "Send your partner a 10-second voice note of the rain or street sounds outside your balcony.",
-  completedByAlex: true,
+  completedByAlex: false,
   completedBySam: false,
 };
