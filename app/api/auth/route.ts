@@ -1,32 +1,77 @@
 import { NextResponse } from "next/server";
+import { verifyFirebaseIdToken } from "@/lib/firebaseAdmin";
 import { themeTokens } from "@/lib/theme";
 
 export async function POST(request: Request) {
   try {
-    const { email, role } = await request.json();
+    const authHeader = request.headers.get("Authorization");
+    const body = await request.json().catch(() => ({}));
 
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Invalid email payload" }, { status: 400 });
+    // Extract Firebase ID Token from Authorization header or body payload
+    const idToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : body.idToken;
+
+    // SECURITY GUARANTEE: Reject requests lacking a cryptographically signed Firebase ID token.
+    // Never trust client-supplied email strings directly.
+    if (!idToken) {
+      return NextResponse.json(
+        {
+          error: "UNAUTHORIZED: Missing cryptographically signed Firebase ID Token. Client-supplied email strings are rejected.",
+          status: "REJECTED_NO_TOKEN",
+        },
+        { status: 401 }
+      );
     }
 
-    const cleanEmail = email.trim().toLowerCase();
-    const allowlist = themeTokens.allowlistEmails;
-
-    // Exact Match Server-Side Allowlist Enforcement
-    if (!allowlist.includes(cleanEmail)) {
+    // Verify ID Token using Firebase Admin SDK
+    let decodedToken: any;
+    try {
+      decodedToken = await verifyFirebaseIdToken(idToken);
+    } catch (err: any) {
       return NextResponse.json(
-        { error: "Access denied. Private space restricted to Harit & Ameera only.", status: "UNAUTHORIZED" },
+        {
+          error: `UNAUTHORIZED: ${err.message || "Invalid or fabricated token payload"}`,
+          status: "REJECTED_INVALID_TOKEN",
+        },
+        { status: 401 }
+      );
+    }
+
+    // Extract cryptographically verified email from signed JWT
+    const verifiedEmail = decodedToken.email ? decodedToken.email.trim().toLowerCase() : null;
+
+    if (!verifiedEmail) {
+      return NextResponse.json(
+        { error: "UNAUTHORIZED: Token does not contain a verified email address.", status: "REJECTED_NO_EMAIL" },
+        { status: 401 }
+      );
+    }
+
+    // Check verified email against strict 2-user allowlist
+    const allowlist = themeTokens.allowlistEmails;
+    if (!allowlist.includes(verifiedEmail)) {
+      return NextResponse.json(
+        {
+          error: `FORBIDDEN: Verified account (${verifiedEmail}) is not in the Whitelisted Couple Allowlist.`,
+          status: "REJECTED_NOT_WHITELISTED",
+        },
         { status: 403 }
       );
     }
 
+    const role = verifiedEmail.includes("harit") ? "Harit" : "Ameera";
+
     return NextResponse.json({
       success: true,
-      user: role === "Harit" ? "Harit" : "Ameera",
-      email: cleanEmail,
-      token: `sunrise_token_${Date.now()}`,
+      user: role,
+      email: verifiedEmail,
+      verifiedByServer: true,
     });
-  } catch {
-    return NextResponse.json({ error: "Authentication server error" }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: "Authentication server error", details: error.message },
+      { status: 500 }
+    );
   }
 }
