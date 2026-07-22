@@ -237,7 +237,7 @@ export default function Home() {
             {isMissionDone ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-500 fill-emerald-100" />
             ) : (
-              <Circle className="w-5 h-5 text-stone-400 hover:text-[#D4A857] transition-colors" />
+              <Circle className="w-5 h-5 text-[#7A7267] hover:text-[#D4A857] transition-colors" />
             )}
           </button>
           <div className="flex-1">
