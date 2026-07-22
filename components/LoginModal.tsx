@@ -4,15 +4,12 @@ import React, { useState } from "react";
 import { useSunriseStore } from "@/lib/store";
 import { PROFILES } from "@/lib/initialData";
 import { UserRole } from "@/lib/types";
-import { auth, googleProvider } from "@/lib/firebase";
-import { signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
-import { Lock, Mail, ShieldCheck, UserCheck, AlertCircle } from "lucide-react";
+import { Lock, ShieldCheck, UserCheck, AlertCircle } from "lucide-react";
 import confetti from "canvas-confetti";
 
 export default function LoginModal() {
   const { isLoggedIn, login } = useSunriseStore();
   const [selectedRole, setSelectedRole] = useState<UserRole>("Harit");
-  const [email, setEmail] = useState("haritmishra123@gmail.com");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -21,96 +18,41 @@ export default function LoginModal() {
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
-    setEmail(role === "Harit" ? "haritmishra123@gmail.com" : "shethameera@gmail.com");
     setErrorMsg(null);
   };
 
-  // Real Google Sign-In with Popup via Firebase Client SDK
-  const handleRealGoogleSignIn = async () => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password) {
+      setErrorMsg("Please enter the private space password.");
+      return;
+    }
+
     setIsVerifying(true);
     setErrorMsg(null);
 
     try {
-      // 1. Trigger real Google OAuth popup via Firebase Client SDK
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      // 2. Extract genuine, cryptographically signed Firebase ID token (JWT) from Google OAuth
-      const realIdToken = await user.getIdToken();
-
-      // 3. Send real ID Token to Server API for verification
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${realIdToken}`,
         },
-        body: JSON.stringify({ idToken: realIdToken }),
+        body: JSON.stringify({ password, role: selectedRole }),
       });
 
-      const data = await res.json().catch(() => ({ error: `HTTP ${res.status} ${res.statusText}` }));
+      const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
 
       if (!res.ok || !data.success) {
-        setErrorMsg(`[Server Auth Failed ${res.status}]: ${data.error || "Access Denied"}`);
+        setErrorMsg(data.error || "Incorrect password.");
         setIsVerifying(false);
         return;
       }
 
-      // 4. Verification Succeeded
-      const userRole: UserRole = data.user || selectedRole;
-      login(userRole);
+      // Login Succeeded
+      login(selectedRole);
       confetti({ particleCount: 40, spread: 60, origin: { y: 0.6 } });
-    } catch (err: any) {
-      if (err.code === "auth/popup-closed-by-user") {
-        setErrorMsg("Google Sign-In popup was closed before completing.");
-      } else if (err.code === "auth/unauthorized-domain") {
-        setErrorMsg("This domain is not authorized in Firebase Console → Auth Settings → Authorized Domains.");
-      } else {
-        setErrorMsg(`[Firebase Auth Error]: ${err.message || "Failed to complete Google Sign-In"}`);
-      }
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  // Real Email / Password Login via Firebase Auth
-  const handleEmailPasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsVerifying(true);
-    setErrorMsg(null);
-
-    try {
-      // If user enters password, authenticate with real Firebase Auth email/password credentials
-      if (password && password.length >= 6) {
-        const userCred = await signInWithEmailAndPassword(auth, email.trim(), password);
-        const realIdToken = await userCred.user.getIdToken();
-
-        const res = await fetch("/api/auth", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${realIdToken}`,
-          },
-          body: JSON.stringify({ idToken: realIdToken }),
-        });
-
-        const data = await res.json().catch(() => ({ error: `HTTP ${res.status} ${res.statusText}` }));
-
-        if (!res.ok || !data.success) {
-          setErrorMsg(`[Auth Failed ${res.status}]: ${data.error || "Access Denied"}`);
-          setIsVerifying(false);
-          return;
-        }
-
-        login(selectedRole);
-        confetti({ particleCount: 40, spread: 60, origin: { y: 0.6 } });
-        return;
-      }
-
-      // If no custom credentials supplied, perform real Google Sign-In popup
-      await handleRealGoogleSignIn();
-    } catch (err: any) {
-      setErrorMsg(`[Login Error]: ${err.message || "Invalid credentials"}`);
+    } catch {
+      setErrorMsg("Failed to connect to authentication server.");
     } finally {
       setIsVerifying(false);
     }
@@ -134,7 +76,7 @@ export default function LoginModal() {
 
         {/* Account Selector Pills */}
         <div className="space-y-2">
-          <label className="text-xs font-sans text-[#7A7267] font-medium">Select Account to Log In</label>
+          <label className="text-xs font-sans text-[#7A7267] font-medium">Select Account</label>
           <div className="grid grid-cols-2 gap-3">
             {(["Harit", "Ameera"] as const).map((role) => {
               const p = PROFILES[role];
@@ -161,75 +103,51 @@ export default function LoginModal() {
           </div>
         </div>
 
-        {/* Detailed Error State Display */}
+        {/* Error State Banner */}
         {errorMsg && (
-          <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-sans flex items-start gap-2 break-all">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-sans flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        {/* Login Form */}
-        <form onSubmit={handleEmailPasswordSubmit} className="space-y-4 font-sans text-xs">
+        {/* Password Form */}
+        <form onSubmit={handlePasswordSubmit} className="space-y-4 font-sans text-xs">
           <div>
-            <label className="text-[#7A7267] font-medium">Google / Gmail Address</label>
-            <div className="relative mt-1">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setErrorMsg(null);
-                }}
-                placeholder="e.g. haritmishra123@gmail.com"
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] text-xs focus:ring-2 focus:ring-[#D4A857] focus:outline-none text-[#3A342C] dark:text-[#F7F3ED]"
-                required
-              />
-              <Mail className="w-4 h-4 text-[#7A7267] absolute left-3 top-3" />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[#7A7267] font-medium">Password (Optional if using Google OAuth)</label>
+            <label className="text-[#7A7267] font-medium">Private Space Password</label>
             <div className="relative mt-1">
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password or use Google Sign-In"
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setErrorMsg(null);
+                }}
+                placeholder="Enter private shared password"
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] text-xs focus:ring-2 focus:ring-[#D4A857] focus:outline-none text-[#3A342C] dark:text-[#F7F3ED]"
+                required
+                autoFocus
               />
               <Lock className="w-4 h-4 text-[#7A7267] absolute left-3 top-3" />
             </div>
           </div>
 
-          {/* Login Buttons */}
-          <div className="space-y-2 pt-2">
-            <button
-              type="button"
-              disabled={isVerifying}
-              onClick={handleRealGoogleSignIn}
-              className="w-full py-3 rounded-full bg-[#D4A857] hover:bg-[#c39746] text-white font-sans text-xs font-semibold shadow-md hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              <span>🌐</span>{" "}
-              {isVerifying
-                ? "Opening Google Sign-In Popup..."
-                : `Sign In with Google Account (${PROFILES[selectedRole].name})`}
-            </button>
-
+          {/* Submit Button */}
+          <div className="pt-2">
             <button
               type="submit"
               disabled={isVerifying}
-              className="w-full py-2.5 rounded-full bg-white dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] text-[#3A342C] dark:text-[#F7F3ED] text-xs font-sans font-medium flex items-center justify-center gap-2 hover:bg-[#EDE0D0]/50 cursor-pointer disabled:opacity-50"
+              className="w-full py-3 rounded-full bg-[#D4A857] hover:bg-[#c39746] text-white font-sans text-xs font-semibold shadow-md hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <UserCheck className="w-4 h-4" /> Sign In as {PROFILES[selectedRole].name} ({PROFILES[selectedRole].city})
+              <UserCheck className="w-4 h-4" />{" "}
+              {isVerifying ? "Unlocking Private Space..." : `Unlock Sunrise as ${PROFILES[selectedRole].name}`}
             </button>
           </div>
         </form>
 
         <div className="text-center pt-1 border-t border-[#EDE0D0] dark:border-[#3D352E]">
           <p className="text-[10px] font-sans text-[#7A7267] flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Real Firebase OAuth &amp; Admin JWT Active
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Server-Verified Password Gate Active
           </p>
         </div>
       </div>
