@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to verify user is authenticated and in the 2-user allowlist
+    function isWhitelistedCouple() {
+      return request.auth != null && (
+        request.auth.token.email == 'harit@sunrise.app' || 
+        request.auth.token.email == 'ameera@sunrise.app'
+      );
+    }
+
+    // Default deny all documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Letters collection: Restrict read/write strictly to Harit & Ameera
+    match /letters/{letterId} {
+      allow read, write: if isWhitelistedCouple();
+    }
+
+    // Dinners collection: Restrict read/write strictly to Harit & Ameera
+    match /dinners/{dinnerId} {
+      allow read, write: if isWhitelistedCouple();
+    }
+
+    // Gratitudes collection: Restrict read/write strictly to Harit & Ameera
+    match /gratitudes/{gratitudeId} {
+      allow read, write: if isWhitelistedCouple();
+    }
+
+    // Voice Notes collection: Restrict read/write strictly to Harit & Ameera
+    match /voiceNotes/{voiceId} {
+      allow read, write: if isWhitelistedCouple();
+    }
+
+    // Memories collection: Restrict read/write strictly to Harit & Ameera
+    match /memories/{memoryId} {
+      allow read, write: if isWhitelistedCouple();
+    }
+  }
+}

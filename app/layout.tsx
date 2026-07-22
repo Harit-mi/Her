@@ -4,17 +4,31 @@ import { SunriseProvider } from "@/lib/store";
 import UserSwitcher from "@/components/UserSwitcher";
 import Navbar from "@/components/Navbar";
 import LoginModal from "@/components/LoginModal";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Sunrise • Private Space for Two",
-  description: "A private digital space shared between two people in Gujarat & Maharashtra, India.",
-  manifest: "/manifest.json",
+  description: "A private digital space shared between Harit (Gujarat) & Ameera (Maharashtra), India.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Sunrise",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FAF7F2",
+  themeColor: "#FAF6F0",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -24,15 +38,35 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col selection:bg-amber-200 selection:text-amber-900">
+      <head>
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Sunrise" />
+      </head>
+      <body className="min-h-full flex flex-col selection:bg-[#EDE0D0] selection:text-[#3A342C]">
         <SunriseProvider>
-          <header className="sticky top-0 z-30 bg-[#FAF7F2]/80 dark:bg-[#1C1917]/80 backdrop-blur-md border-b border-stone-200/60 dark:border-stone-800/60">
+          <header className="sticky top-0 z-30 bg-[#FAF6F0]/80 dark:bg-[#1E1A16]/80 backdrop-blur-md border-b border-[#EDE0D0]/60 dark:border-[#3D352E]/60">
             <UserSwitcher />
           </header>
           <main className="flex-1 pb-24 pt-4">{children}</main>
           <Navbar />
           <LoginModal />
+          <PWAInstallPrompt />
         </SunriseProvider>
+
+        {/* Register PWA Service Worker */}
+        <Script id="register-sw" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                  console.log('SW registration skipped:', err);
+                });
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );
