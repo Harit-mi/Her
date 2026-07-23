@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCloudDatabase, saveCloudDatabase } from "@/lib/db";
+import { getCloudDatabase, saveCloudDatabase, SEED_DATA } from "@/lib/db";
 import { Letter, Reaction } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +19,14 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const { action, payload } = body;
 
-    const db = await getCloudDatabase();
+    let db = await getCloudDatabase();
 
     switch (action) {
+      case "resetAllCloudData": {
+        db = { ...SEED_DATA };
+        break;
+      }
+
       case "addLetter": {
         const newLetter: Letter = {
           ...payload,
