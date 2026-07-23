@@ -65,21 +65,15 @@ declare global {
 }
 
 export function sanitizeDatabase(data: DatabaseSchema): DatabaseSchema {
-  // Filter out legacy hardcoded sample/mock letters referencing Mumbai or old mock IDs
-  const cleanLetters = (data.letters || []).filter((l) => {
-    if (l.id === "letter-1" || l.id === "letter-2") return false;
-    if (l.content && (l.content.includes("Sabarmati Riverfront") || l.content.includes("Marine Drive") || l.content.includes("Arabian Sea in Mumbai"))) return false;
-    if (l.title && (l.title.includes("Mumbai Sunset at Bandra Stand") || l.title.includes("Quiet Rain in Gujarat"))) return false;
-    return true;
-  });
+  // Filter strictly legacy initial seed letter-1 and letter-2 by ID only
+  const cleanLetters = (data.letters || []).filter((l) => l.id !== "letter-1" && l.id !== "letter-2");
 
-  // Ensure Ameera's city is Nashik across profiles
+  // Enforce profiles for Harit (Ahmedabad, Gujarat) & Ameera (Nashik, Maharashtra)
   const cleanProfiles = {
     Harit: { ...PROFILES.Harit },
     Ameera: { ...PROFILES.Ameera, city: "Nashik", state: "Maharashtra" },
   };
 
-  // Clean countdowns to point to Nashik or Reunion in Mumbai
   const cleanCountdowns = (data.countdowns || INITIAL_COUNTDOWNS).map((cd) => {
     if (cd.title.toLowerCase().includes("nashik")) {
       return { ...cd, title: "Reunion in Mumbai 🚆", targetDate: "2026-08-15T10:00:00Z" };
@@ -164,8 +158,7 @@ export async function getCloudDatabase(): Promise<DatabaseSchema> {
 
         globalThis.__sunrise_db_cache = merged;
 
-        // If legacy mock letters were filtered out, write back the clean state to Firestore
-        if (rawData.letters && rawData.letters.some((l) => l.id === "letter-1" || l.id === "letter-2" || (l.content && l.content.includes("Sabarmati")))) {
+        if (rawData.letters && rawData.letters.some((l) => l.id === "letter-1" || l.id === "letter-2")) {
           await saveCloudDatabase(merged);
         }
 
