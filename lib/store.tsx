@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
   UserRole,
   Letter,
@@ -95,6 +95,7 @@ interface SunriseContextType {
   addPlaylistSong: (song: Omit<PlaylistSongItem, "id" | "addedBy">) => void;
   toggleMission: (user: UserRole) => void;
   resetAllData: () => void;
+  refreshData: () => Promise<void>;
 
   // Helpers
   unreadLetterForCurrent: Letter | undefined;
@@ -113,7 +114,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const [showSunriseModal, setShowSunriseModal] = useState<boolean>(false);
   const [showRandomMemoryModal, setShowRandomMemoryModal] = useState<boolean>(false);
 
-  // Data state (starts clean with Reunion in Mumbai)
+  // Data state
   const [letters, setLetters] = useState<Letter[]>(INITIAL_LETTERS);
   const [dinners, setDinners] = useState<DinnerItem[]>(INITIAL_DINNERS);
   const [gratitudes, setGratitudes] = useState<GratitudeNote[]>(INITIAL_GRATITUDES);
@@ -129,46 +130,93 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const [playlist, setPlaylist] = useState<PlaylistSongItem[]>(INITIAL_PLAYLIST);
   const [dailyMission, setDailyMission] = useState<DailyMissionItem>(INITIAL_DAILY_MISSION);
 
-  // Verify server session on mount (do NOT auto-authenticate from unverified localStorage)
+  // Synchronize state with Cloud API
+  const refreshData = useCallback(async () => {
+    try {
+      const res = await fetch("/api/sync", { cache: "no-store" });
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.success && json.data) {
+        const d = json.data;
+        if (Array.isArray(d.letters)) setLetters(d.letters);
+        if (Array.isArray(d.dinners)) setDinners(d.dinners);
+        if (Array.isArray(d.gratitudes)) setGratitudes(d.gratitudes);
+        if (Array.isArray(d.memories)) setMemories(d.memories);
+        if (Array.isArray(d.voiceNotes)) setVoiceNotes(d.voiceNotes);
+        if (Array.isArray(d.wishes)) setWishes(d.wishes);
+        if (Array.isArray(d.surprises)) setSurprises(d.surprises);
+        if (Array.isArray(d.countdowns)) {
+          const updated = d.countdowns.map((item: CountdownItem) =>
+            item.title.toLowerCase().includes("nashik")
+              ? { ...item, title: "Reunion in Mumbai 🚆", targetDate: "2026-08-15T10:00:00Z" }
+              : item
+          );
+          setCountdowns(updated);
+        }
+        if (Array.isArray(d.timeCapsules)) setTimeCapsules(d.timeCapsules);
+        if (Array.isArray(d.sleepLogs)) setSleepLogs(d.sleepLogs);
+        if (Array.isArray(d.bookQuotes)) setBookQuotes(d.bookQuotes);
+        if (Array.isArray(d.animeList)) setAnimeList(d.animeList);
+        if (Array.isArray(d.playlist)) setPlaylist(d.playlist);
+        if (d.dailyMission) setDailyMission(d.dailyMission);
+      }
+    } catch {
+      // quiet fallback
+    }
+  }, []);
+
+  // Post action to Cloud API
+  const dispatchCloudAction = async (action: string, payload: any) => {
+    try {
+      await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, payload }),
+      });
+    } catch {
+      // quiet fallback
+    }
+  };
+
+  // Initial load & periodic Cloud sync (every 3 seconds + tab focus)
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem("sunrise_theme");
       if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
-
-      const l = localStorage.getItem("sunrise_letters");
-      if (l) setLetters(JSON.parse(l));
-
-      const cd = localStorage.getItem("sunrise_countdowns");
-      if (cd) {
-        const parsed: CountdownItem[] = JSON.parse(cd);
-        const updated = parsed.map((item) =>
-          item.title.toLowerCase().includes("nashik")
-            ? { ...item, title: "Reunion in Mumbai 🚆", targetDate: "2026-08-15T10:00:00Z" }
-            : item
-        );
-        setCountdowns(updated);
-      } else {
-        setCountdowns(INITIAL_COUNTDOWNS);
-      }
     } catch {
-      setIsLoggedIn(false);
+      // ignore
     }
-  }, []);
 
-  // Save state
+    refreshData();
+
+    const interval = setInterval(() => {
+      refreshData();
+    }, 3000);
+
+    const handleFocus = () => refreshData();
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("visibilitychange", handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("visibilitychange", handleFocus);
+    };
+  }, [refreshData]);
+
+  // Save theme preferences
   useEffect(() => {
     try {
       localStorage.setItem("sunrise_theme", theme);
-      localStorage.setItem("sunrise_letters", JSON.stringify(letters));
-      localStorage.setItem("sunrise_countdowns", JSON.stringify(countdowns));
     } catch {
-      // fallback
+      // ignore
     }
-  }, [theme, letters, countdowns]);
+  }, [theme]);
 
   const login = (user: UserRole) => {
     setLoggedInUser(user);
     setIsLoggedIn(true);
+    refreshData();
   };
 
   const logout = () => {
@@ -181,7 +229,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
     setTheme(nextTheme);
   };
 
-  // Mutators
+  // Mutators with local update + instant cloud sync
   const addLetter = (letterData: Omit<Letter, "id" | "isRead" | "reactions" | "replies">) => {
     const newLetter: Letter = {
       ...letterData,
@@ -191,12 +239,14 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       replies: [],
     };
     setLetters((prev) => [newLetter, ...prev]);
+    dispatchCloudAction("addLetter", letterData);
   };
 
   const markLetterRead = (letterId: string) => {
     setLetters((prev) =>
       prev.map((l) => (l.id === letterId ? { ...l, isRead: true } : l))
     );
+    dispatchCloudAction("markLetterRead", { letterId });
   };
 
   const reactToLetter = (letterId: string, emoji: Reaction["emoji"]) => {
@@ -215,6 +265,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
           : l
       )
     );
+    dispatchCloudAction("reactToLetter", { letterId, emoji, user: loggedInUser });
   };
 
   const replyToLetter = (letterId: string, text: string) => {
@@ -229,6 +280,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
         l.id === letterId ? { ...l, replies: [...l.replies, replyObj] } : l
       )
     );
+    dispatchCloudAction("replyToLetter", { letterId, text, sender: loggedInUser });
   };
 
   const addDinner = (dinnerData: Omit<DinnerItem, "id" | "number">) => {
@@ -239,6 +291,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       number: maxNum + 1,
     };
     setDinners((prev) => [newDinner, ...prev]);
+    dispatchCloudAction("addDinner", dinnerData);
   };
 
   const addGratitude = (text: string, color = "bg-amber-100/90 text-amber-900 border-amber-200") => {
@@ -250,6 +303,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       color,
     };
     setGratitudes((prev) => [note, ...prev]);
+    dispatchCloudAction("addGratitude", { text, color, author: loggedInUser });
   };
 
   const addMemory = (memoryData: Omit<MemoryItem, "id">) => {
@@ -258,6 +312,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       id: `mem-${Date.now()}`,
     };
     setMemories((prev) => [mem, ...prev]);
+    dispatchCloudAction("addMemory", memoryData);
   };
 
   const addVoiceNote = (voiceData: Omit<VoiceNoteItem, "id">) => {
@@ -266,6 +321,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       id: `voice-${Date.now()}`,
     };
     setVoiceNotes((prev) => [voice, ...prev]);
+    dispatchCloudAction("addVoiceNote", voiceData);
   };
 
   const toggleWish = (wishId: string) => {
@@ -280,6 +336,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
           : w
       )
     );
+    dispatchCloudAction("toggleWish", { wishId });
   };
 
   const addWish = (title: string, category: WishItem["category"]) => {
@@ -291,6 +348,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       addedBy: loggedInUser,
     };
     setWishes((prev) => [wish, ...prev]);
+    dispatchCloudAction("addWish", { title, category, addedBy: loggedInUser });
   };
 
   const openSurprise = (surpriseId: string) => {
@@ -305,6 +363,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
           : s
       )
     );
+    dispatchCloudAction("openSurprise", { surpriseId });
   };
 
   const addSurprise = (surpriseData: Omit<SurpriseItem, "id" | "isOpened">) => {
@@ -314,6 +373,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       isOpened: false,
     };
     setSurprises((prev) => [surprise, ...prev]);
+    dispatchCloudAction("addSurprise", surpriseData);
   };
 
   const addCountdown = (item: Omit<CountdownItem, "id">) => {
@@ -322,6 +382,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       id: `cd-${Date.now()}`,
     };
     setCountdowns((prev) => [...prev, cd]);
+    dispatchCloudAction("addCountdown", item);
   };
 
   const addTimeCapsule = (item: Omit<TimeCapsuleItem, "id" | "isUnlocked">) => {
@@ -331,6 +392,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       isUnlocked: false,
     };
     setTimeCapsules((prev) => [tc, ...prev]);
+    dispatchCloudAction("addTimeCapsule", item);
   };
 
   const logSleep = (log: Omit<SleepLogItem, "id">) => {
@@ -339,6 +401,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       id: `sleep-${Date.now()}`,
     };
     setSleepLogs((prev) => [item, ...prev]);
+    dispatchCloudAction("logSleep", log);
   };
 
   const addBookQuote = (item: Omit<BookQuoteItem, "id" | "dateAdded" | "addedBy">) => {
@@ -349,6 +412,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       addedBy: loggedInUser,
     };
     setBookQuotes((prev) => [bq, ...prev]);
+    dispatchCloudAction("addBookQuote", { ...item, addedBy: loggedInUser });
   };
 
   const addAnime = (item: Omit<AnimeItem, "id">) => {
@@ -357,6 +421,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       id: `anime-${Date.now()}`,
     };
     setAnimeList((prev) => [anime, ...prev]);
+    dispatchCloudAction("addAnime", item);
   };
 
   const addPlaylistSong = (song: Omit<PlaylistSongItem, "id" | "addedBy">) => {
@@ -366,6 +431,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       addedBy: loggedInUser,
     };
     setPlaylist((prev) => [item, ...prev]);
+    dispatchCloudAction("addPlaylistSong", { ...song, addedBy: loggedInUser });
   };
 
   const toggleMission = (user: UserRole) => {
@@ -374,6 +440,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       completedByAlex: user === "Harit" ? !prev.completedByAlex : prev.completedByAlex,
       completedBySam: user === "Ameera" ? !prev.completedBySam : prev.completedBySam,
     }));
+    dispatchCloudAction("toggleMission", { user });
   };
 
   const resetAllData = () => {
@@ -461,6 +528,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
         addPlaylistSong,
         toggleMission,
         resetAllData,
+        refreshData,
 
         unreadLetterForCurrent,
         latestLetter,
