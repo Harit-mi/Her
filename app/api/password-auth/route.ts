@@ -1,18 +1,8 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
 
 export async function POST(request: Request) {
   try {
     const { password, role } = await request.json().catch(() => ({}));
-
-    const expectedPassword = process.env.APP_PASSWORD;
-
-    if (!expectedPassword) {
-      return NextResponse.json(
-        { success: false, error: "Server authentication misconfigured. APP_PASSWORD environment variable is missing on Vercel." },
-        { status: 500 }
-      );
-    }
 
     if (!password || typeof password !== "string") {
       return NextResponse.json(
@@ -21,15 +11,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Constant-time string comparison to prevent timing attacks
-    const bufferPassword = Buffer.from(password.trim());
-    const bufferExpected = Buffer.from(expectedPassword.trim());
+    const inputPass = password.trim();
+    const envPass = (process.env.APP_PASSWORD || "").trim();
 
-    const isMatch =
-      bufferPassword.length === bufferExpected.length &&
-      crypto.timingSafeEqual(bufferPassword, bufferExpected);
+    // Accept process.env.APP_PASSWORD or "panda1902"
+    const isValid = inputPass === "panda1902" || (envPass !== "" && inputPass === envPass);
 
-    if (!isMatch) {
+    if (!isValid) {
       return NextResponse.json(
         { success: false, error: "Incorrect password" },
         { status: 401 }
