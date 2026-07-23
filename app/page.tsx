@@ -20,6 +20,7 @@ import {
   Circle,
   Calendar,
   CloudSun,
+  Eye,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -28,6 +29,8 @@ export default function Home() {
     isLoggedIn,
     currentUser,
     unreadLetterForCurrent,
+    letters,
+    openLetterModal,
     dinners,
     setShowSunriseModal,
     setShowRandomMemoryModal,
@@ -115,24 +118,37 @@ export default function Home() {
           </div>
 
           <h2 className="text-xl sm:text-2xl font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium">
-            {unreadLetterForCurrent ? "You have a new letter waiting." : "No new letter today, but someone is thinking about you."}
+            {unreadLetterForCurrent
+              ? "You have a new letter waiting!"
+              : letters.length > 0
+              ? `Latest Letter: "${letters[0].title}"`
+              : "No letters written yet. Start your nightly tradition!"}
           </h2>
 
-          {unreadLetterForCurrent ? (
-            <button
-              onClick={() => setShowSunriseModal(true)}
-              className="px-6 py-3 rounded-full bg-[#D4A857] hover:bg-[#c39746] text-white font-sans text-xs font-semibold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 mx-auto cursor-pointer"
-            >
-              <Mail className="w-4 h-4" /> Open Morning Sunrise Reveal
-            </button>
-          ) : (
+          <div className="flex flex-wrap justify-center gap-3">
+            {unreadLetterForCurrent ? (
+              <button
+                onClick={() => openLetterModal(unreadLetterForCurrent.id)}
+                className="px-6 py-3 rounded-full bg-[#D4A857] hover:bg-[#c39746] text-white font-sans text-xs font-semibold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Mail className="w-4 h-4" /> Open Morning Sunrise Reveal
+              </button>
+            ) : letters.length > 0 ? (
+              <button
+                onClick={() => openLetterModal(letters[0].id)}
+                className="px-6 py-3 rounded-full bg-[#D4A857] hover:bg-[#c39746] text-white font-sans text-xs font-semibold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Eye className="w-4 h-4" /> Read Latest Letter
+              </button>
+            ) : null}
+
             <Link
               href="/letter"
-              className="px-6 py-3 rounded-full bg-[#3A342C] dark:bg-[#F7F3ED] text-white dark:text-[#3A342C] font-sans text-xs font-semibold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 mx-auto inline-flex cursor-pointer"
+              className="px-6 py-3 rounded-full bg-[#3A342C] dark:bg-[#F7F3ED] text-white dark:text-[#3A342C] font-sans text-xs font-semibold shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 inline-flex cursor-pointer"
             >
               <Mail className="w-4 h-4" /> Write Tonight's Letter for {partnerProfile.name}
             </Link>
-          )}
+          </div>
         </div>
       </div>
 

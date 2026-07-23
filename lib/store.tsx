@@ -56,6 +56,9 @@ interface SunriseContextType {
   setShowSunriseModal: (show: boolean) => void;
   showRandomMemoryModal: boolean;
   setShowRandomMemoryModal: (show: boolean) => void;
+  selectedLetterId: string | null;
+  setSelectedLetterId: (id: string | null) => void;
+  openLetterModal: (id: string) => void;
 
   // Data collections
   letters: Letter[];
@@ -113,6 +116,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const [fontStyle, setFontStyle] = useState<"serif" | "sans">("serif");
   const [showSunriseModal, setShowSunriseModal] = useState<boolean>(false);
   const [showRandomMemoryModal, setShowRandomMemoryModal] = useState<boolean>(false);
+  const [selectedLetterId, setSelectedLetterId] = useState<string | null>(null);
 
   // Data state
   const [letters, setLetters] = useState<Letter[]>(INITIAL_LETTERS);
@@ -212,6 +216,11 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
   }, [theme]);
+
+  const openLetterModal = (id: string) => {
+    setSelectedLetterId(id);
+    setShowSunriseModal(true);
+  };
 
   const login = (user: UserRole) => {
     setLoggedInUser(user);
@@ -492,6 +501,9 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
         setShowSunriseModal,
         showRandomMemoryModal,
         setShowRandomMemoryModal,
+        selectedLetterId,
+        setSelectedLetterId,
+        openLetterModal,
 
         letters,
         dinners,

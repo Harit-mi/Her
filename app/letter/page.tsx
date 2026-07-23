@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSunriseStore } from "@/lib/store";
 import { PROFILES } from "@/lib/initialData";
 import { MoodType } from "@/lib/types";
-import { Mail, Send, Image as ImageIcon, Music, BookOpen, Sparkles, CheckCircle2, Clock } from "lucide-react";
+import { Mail, Send, Image as ImageIcon, Music, BookOpen, Sparkles, CheckCircle2, Clock, Eye } from "lucide-react";
 import confetti from "canvas-confetti";
 
 export default function LetterPage() {
-  const { addLetter, currentUser, letters } = useSunriseStore();
+  const { addLetter, currentUser, letters, openLetterModal } = useSunriseStore();
   const partnerProfile = PROFILES[currentUser === "Harit" ? "Ameera" : "Harit"];
   const userProfile = PROFILES[currentUser];
 
@@ -21,7 +21,7 @@ export default function LetterPage() {
   const [bookTitle, setBookTitle] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [isSealing, setIsSealing] = useState(false);
-  const [isSent, setIsSent] = useState(false);
+  const [lastSentLetterId, setLastSentLetterId] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +44,7 @@ export default function LetterPage() {
       });
 
       setIsSealing(false);
-      setIsSent(true);
+      setLastSentLetterId(`letter-${Date.now()}`);
 
       confetti({
         particleCount: 50,
@@ -75,7 +75,7 @@ export default function LetterPage() {
             </motion.div>
             <h3 className="text-2xl font-serif text-white font-medium">Sealing Your Nightly Letter...</h3>
             <p className="text-xs font-sans text-[#EDE0D0]">
-              Sending across 520 km from {userProfile.city} to {partnerProfile.name} in {partnerProfile.city} 🇮🇳
+              Sending across 470 km from {userProfile.city} to {partnerProfile.name} in {partnerProfile.city} 🇮🇳
             </p>
           </motion.div>
         )}
@@ -93,7 +93,7 @@ export default function LetterPage() {
         </div>
       </div>
 
-      {isSent ? (
+      {lastSentLetterId ? (
         <div className="glass-panel p-8 rounded-3xl text-center space-y-4 border border-[#EDE0D0] dark:border-[#3D352E]">
           <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 mx-auto flex items-center justify-center text-3xl">
             ✓
@@ -102,14 +102,28 @@ export default function LetterPage() {
             Your letter has been sealed and delivered!
           </h2>
           <p className="text-xs font-sans text-[#7A7267] max-w-md mx-auto">
-            {partnerProfile.name} will be greeted by the morning sunrise reveal as soon as she wakes up.
+            {partnerProfile.name} will be greeted by the morning sunrise reveal as soon as she opens the app.
           </p>
-          <button
-            onClick={() => setIsSent(false)}
-            className="px-6 py-2.5 rounded-full bg-[#D4A857] text-white text-xs font-sans font-semibold cursor-pointer"
-          >
-            Write Another Note
-          </button>
+          <div className="flex justify-center gap-3 pt-2">
+            <button
+              onClick={() => {
+                if (letters.length > 0) openLetterModal(letters[0].id);
+              }}
+              className="px-6 py-2.5 rounded-full bg-[#D4A857] text-white text-xs font-sans font-semibold cursor-pointer shadow-md flex items-center gap-1.5"
+            >
+              <Eye className="w-4 h-4" /> Preview Sealed Letter
+            </button>
+            <button
+              onClick={() => {
+                setLastSentLetterId(null);
+                setTitle("");
+                setContent("");
+              }}
+              className="px-6 py-2.5 rounded-full bg-[#3A342C] dark:bg-[#F7F3ED] text-white dark:text-[#3A342C] text-xs font-sans font-semibold cursor-pointer"
+            >
+              Write Another Note
+            </button>
+          </div>
         </div>
       ) : (
         /* Fullscreen Distraction-Free Composer Card */
@@ -211,20 +225,33 @@ export default function LetterPage() {
           {letters.map((l) => (
             <div
               key={l.id}
-              className="glass-panel p-5 rounded-2xl flex items-center justify-between gap-4 border border-[#EDE0D0] dark:border-[#3D352E]"
+              onClick={() => openLetterModal(l.id)}
+              className="glass-panel p-5 rounded-2xl flex items-center justify-between gap-4 border border-[#EDE0D0] dark:border-[#3D352E] hover:border-[#D4A857] cursor-pointer hover:scale-[1.01] transition-all group"
             >
               <div>
                 <span className="text-[10px] uppercase font-bold text-[#D4A857]">
-                  From {l.author} to {l.recipient} • {l.dateStr}
+                  From {l.author} to {l.recipient} • {l.dateStr || "Nightly Note"}
                 </span>
-                <h4 className="text-base font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium mt-0.5">
+                <h4 className="text-base font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium mt-0.5 group-hover:text-[#D4A857] transition-colors">
                   {l.title}
                 </h4>
+                {l.reactions && l.reactions.length > 0 && (
+                  <div className="flex gap-1 mt-1 text-xs">
+                    {l.reactions.map((r, i) => (
+                      <span key={i}>{r.emoji}</span>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <span className={`text-xs px-3 py-1 rounded-full font-sans font-medium ${l.isRead ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800 animate-pulse"}`}>
-                {l.isRead ? "Read ✓" : "Unread ✉️"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs px-3 py-1 rounded-full font-sans font-medium ${l.isRead ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800 animate-pulse"}`}>
+                  {l.isRead ? "Read ✓" : "Unread ✉️"}
+                </span>
+                <button className="px-3 py-1 rounded-full bg-[#D4A857] text-white text-xs font-sans font-medium flex items-center gap-1 shadow-xs">
+                  <Eye className="w-3.5 h-3.5" /> Read 📜
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -25,6 +25,19 @@
   },
   "letters": [
     {
+      "author": "Ameera",
+      "recipient": "Harit",
+      "title": "Morning Drizzle in Nashik",
+      "content": "Good morning Harit! Testing cloud sync.",
+      "writtenAt": "7:00 AM",
+      "dateStr": "July 23, 2026",
+      "mood": "😊 Happy",
+      "id": "letter-1784807717967",
+      "isRead": false,
+      "reactions": [],
+      "replies": []
+    },
+    {
       "id": "letter-1",
       "author": "Harit",
       "recipient": "Ameera",

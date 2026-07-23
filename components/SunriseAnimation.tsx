@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSunriseStore } from "@/lib/store";
 import { PROFILES } from "@/lib/initialData";
 import { Reaction } from "@/lib/types";
-import { X, Heart, Send, Music, BookOpen, Tv, Sparkles, MapPin } from "lucide-react";
+import { X, Send, Music, BookOpen, MapPin, Sparkles } from "lucide-react";
 import confetti from "canvas-confetti";
 
 export default function SunriseAnimation() {
@@ -13,28 +13,38 @@ export default function SunriseAnimation() {
     unreadLetterForCurrent,
     showSunriseModal,
     setShowSunriseModal,
+    selectedLetterId,
+    setSelectedLetterId,
     markLetterRead,
     reactToLetter,
     replyToLetter,
     currentUser,
+    letters,
   } = useSunriseStore();
 
   const [replyText, setReplyText] = useState("");
   const [activeReaction, setActiveReaction] = useState<Reaction["emoji"] | null>(null);
 
-  if (!showSunriseModal || !unreadLetterForCurrent) return null;
+  const letterToDisplay = selectedLetterId
+    ? letters.find((l) => l.id === selectedLetterId)
+    : unreadLetterForCurrent;
 
-  const authorProfile = PROFILES[unreadLetterForCurrent.author];
-  const paragraphs = unreadLetterForCurrent.content.split("\n\n");
+  if (!showSunriseModal || !letterToDisplay) return null;
+
+  const authorProfile = PROFILES[letterToDisplay.author] || PROFILES["Harit"];
+  const paragraphs = letterToDisplay.content.split("\n\n");
 
   const handleClose = () => {
-    markLetterRead(unreadLetterForCurrent.id);
+    if (letterToDisplay.recipient === currentUser && !letterToDisplay.isRead) {
+      markLetterRead(letterToDisplay.id);
+    }
+    setSelectedLetterId(null);
     setShowSunriseModal(false);
   };
 
   const handleReaction = (emoji: Reaction["emoji"]) => {
     setActiveReaction(emoji);
-    reactToLetter(unreadLetterForCurrent.id, emoji);
+    reactToLetter(letterToDisplay.id, emoji);
     confetti({
       particleCount: 25,
       spread: 40,
@@ -45,7 +55,7 @@ export default function SunriseAnimation() {
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyText.trim()) return;
-    replyToLetter(unreadLetterForCurrent.id, replyText.trim());
+    replyToLetter(letterToDisplay.id, replyText.trim());
     setReplyText("");
     confetti({
       particleCount: 30,
@@ -96,7 +106,9 @@ export default function SunriseAnimation() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="text-xs uppercase tracking-widest text-[#D4A857] font-semibold font-sans"
             >
-              "Written while you were asleep."
+              {letterToDisplay.author === currentUser
+                ? `Written by you for ${PROFILES[letterToDisplay.recipient]?.name || letterToDisplay.recipient}`
+                : `"Written while you were asleep."`}
             </motion.p>
 
             <motion.h2
@@ -105,11 +117,11 @@ export default function SunriseAnimation() {
               transition={{ duration: 0.6, delay: 0.6 }}
               className="text-2xl font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium"
             >
-              {unreadLetterForCurrent.title}
+              {letterToDisplay.title}
             </motion.h2>
 
             <p className="text-xs font-sans text-[#7A7267] flex items-center justify-center gap-1">
-              <MapPin className="w-3 h-3 text-[#D4A857]" /> From {authorProfile.name} in {authorProfile.city}, {authorProfile.state} 🇮🇳 • {unreadLetterForCurrent.writtenAt}
+              <MapPin className="w-3 h-3 text-[#D4A857]" /> From {authorProfile.name} in {authorProfile.city}, {authorProfile.state} 🇮🇳 • {letterToDisplay.writtenAt || "Nightly Note"} ({letterToDisplay.dateStr})
             </p>
           </div>
 
@@ -120,33 +132,67 @@ export default function SunriseAnimation() {
                 key={idx}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.8 + idx * 0.25 }}
+                transition={{ duration: 0.6, delay: 0.2 + idx * 0.15 }}
               >
                 {p}
               </motion.p>
             ))}
           </div>
 
+          {/* Attached Photos if present */}
+          {letterToDisplay.photoUrls && letterToDisplay.photoUrls.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {letterToDisplay.photoUrls.map((url, i) => (
+                <img
+                  key={i}
+                  src={url}
+                  alt="Attachment"
+                  className="w-full h-40 object-cover rounded-2xl border border-[#EDE0D0] dark:border-[#3D352E] shadow-sm"
+                />
+              ))}
+            </div>
+          )}
+
           {/* Metadata Chips Strip */}
           <div className="flex flex-wrap gap-2 pt-1 font-sans text-xs">
-            {unreadLetterForCurrent.mood && (
+            {letterToDisplay.mood && (
               <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 border border-amber-200 text-[11px] font-medium">
-                {unreadLetterForCurrent.mood}
+                {letterToDisplay.mood}
               </span>
             )}
 
-            {unreadLetterForCurrent.listeningTo && (
+            {letterToDisplay.listeningTo && (
               <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-200 text-[11px] font-medium flex items-center gap-1">
-                <Music className="w-3 h-3" /> {unreadLetterForCurrent.listeningTo.songTitle}
+                <Music className="w-3 h-3" /> {letterToDisplay.listeningTo.songTitle}
               </span>
             )}
 
-            {unreadLetterForCurrent.readingBook && (
+            {letterToDisplay.readingBook && (
               <span className="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-200 border border-blue-200 text-[11px] font-medium flex items-center gap-1">
-                <BookOpen className="w-3 h-3" /> {unreadLetterForCurrent.readingBook.title}
+                <BookOpen className="w-3 h-3" /> {letterToDisplay.readingBook.title}
               </span>
             )}
           </div>
+
+          {/* Existing Replies List */}
+          {letterToDisplay.replies && letterToDisplay.replies.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-[#EDE0D0] dark:border-[#3D352E]">
+              <p className="text-xs font-sans text-[#7A7267] font-medium flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4A857]" /> Conversation Replies
+              </p>
+              <div className="space-y-2 font-sans text-xs">
+                {letterToDisplay.replies.map((reply) => (
+                  <div key={reply.id} className="p-3 rounded-2xl bg-white/80 dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] space-y-1">
+                    <div className="flex justify-between items-center text-[10px]">
+                      <span className="font-bold text-[#D4A857]">{reply.sender}</span>
+                      <span className="text-[#7A7267]">{reply.timestamp}</span>
+                    </div>
+                    <p className="text-[#3A342C] dark:text-[#F7F3ED] font-serif text-sm">{reply.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 4 Tap-Animated Reaction Buttons */}
           <div className="space-y-2 pt-2 border-t border-[#EDE0D0] dark:border-[#3D352E]">
@@ -182,7 +228,7 @@ export default function SunriseAnimation() {
                 type="submit"
                 className="px-5 py-2.5 rounded-full bg-[#D4A857] hover:bg-[#c39746] text-white text-xs font-sans font-semibold flex items-center gap-1 shadow-xs cursor-pointer"
               >
-                <Send className="w-3.5 h-3.5" /> Send
+                <Send className="w-3.5 h-3.5" /> Reply
               </button>
             </div>
           </form>
