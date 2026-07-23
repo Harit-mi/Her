@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSunriseStore } from "@/lib/store";
 import { PROFILES } from "@/lib/initialData";
 import { MoodType } from "@/lib/types";
-import { Mail, Send, Image as ImageIcon, Music, BookOpen, Sparkles, CheckCircle2, Clock, Eye } from "lucide-react";
+import { Mail, Send, Image as ImageIcon, Music, BookOpen, Sparkles, CheckCircle2, Clock, Eye, Trash2 } from "lucide-react";
 import confetti from "canvas-confetti";
 
 export default function LetterPage() {
-  const { addLetter, currentUser, letters, openLetterModal } = useSunriseStore();
+  const { addLetter, clearLetters, currentUser, letters, openLetterModal } = useSunriseStore();
   const partnerProfile = PROFILES[currentUser === "Harit" ? "Ameera" : "Harit"];
   const userProfile = PROFILES[currentUser];
 
@@ -133,7 +133,7 @@ export default function LetterPage() {
             <label className="text-xs font-sans font-medium text-[#7A7267]">Letter Title</label>
             <input
               type="text"
-              placeholder="e.g. Quiet Rain in Gujarat & Thoughts of Ameera"
+              placeholder="e.g. Rainy Night in Gujarat & Thinking of Ameera"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full mt-1.5 p-3.5 rounded-2xl bg-white/80 dark:bg-[#2A241F] border border-[#EDE0D0] dark:border-[#3D352E] font-serif text-lg font-medium text-[#3A342C] dark:text-[#F7F3ED] focus:ring-2 focus:ring-[#D4A857] focus:outline-none"
@@ -217,44 +217,64 @@ export default function LetterPage() {
 
       {/* Past Letters List */}
       <div className="space-y-4 pt-4">
-        <h3 className="text-xl font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium">
-          Sent & Received Letters
-        </h3>
-
-        <div className="space-y-3">
-          {letters.map((l) => (
-            <div
-              key={l.id}
-              onClick={() => openLetterModal(l.id)}
-              className="glass-panel p-5 rounded-2xl flex items-center justify-between gap-4 border border-[#EDE0D0] dark:border-[#3D352E] hover:border-[#D4A857] cursor-pointer hover:scale-[1.01] transition-all group"
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium">
+            Sent & Received Letters
+          </h3>
+          {letters.length > 0 && (
+            <button
+              onClick={() => {
+                if (confirm("Are you sure you want to clear all test letters?")) {
+                  clearLetters();
+                }
+              }}
+              className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-sans cursor-pointer flex items-center gap-1"
             >
-              <div>
-                <span className="text-[10px] uppercase font-bold text-[#D4A857]">
-                  From {l.author} to {l.recipient} • {l.dateStr || "Nightly Note"}
-                </span>
-                <h4 className="text-base font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium mt-0.5 group-hover:text-[#D4A857] transition-colors">
-                  {l.title}
-                </h4>
-                {l.reactions && l.reactions.length > 0 && (
-                  <div className="flex gap-1 mt-1 text-xs">
-                    {l.reactions.map((r, i) => (
-                      <span key={i}>{r.emoji}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className={`text-xs px-3 py-1 rounded-full font-sans font-medium ${l.isRead ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800 animate-pulse"}`}>
-                  {l.isRead ? "Read ✓" : "Unread ✉️"}
-                </span>
-                <button className="px-3 py-1 rounded-full bg-[#D4A857] text-white text-xs font-sans font-medium flex items-center gap-1 shadow-xs">
-                  <Eye className="w-3.5 h-3.5" /> Read 📜
-                </button>
-              </div>
-            </div>
-          ))}
+              <Trash2 className="w-3.5 h-3.5" /> Clear All Letters
+            </button>
+          )}
         </div>
+
+        {letters.length === 0 ? (
+          <div className="glass-panel p-8 rounded-2xl text-center text-[#7A7267] text-sm font-serif">
+            No letters written yet. Write your very first nightly letter above!
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {letters.map((l) => (
+              <div
+                key={l.id}
+                onClick={() => openLetterModal(l.id)}
+                className="glass-panel p-5 rounded-2xl flex items-center justify-between gap-4 border border-[#EDE0D0] dark:border-[#3D352E] hover:border-[#D4A857] cursor-pointer hover:scale-[1.01] transition-all group"
+              >
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#D4A857]">
+                    From {l.author} to {l.recipient} • {l.dateStr || "Nightly Note"}
+                  </span>
+                  <h4 className="text-base font-serif text-[#3A342C] dark:text-[#F7F3ED] font-medium mt-0.5 group-hover:text-[#D4A857] transition-colors">
+                    {l.title}
+                  </h4>
+                  {l.reactions && l.reactions.length > 0 && (
+                    <div className="flex gap-1 mt-1 text-xs">
+                      {l.reactions.map((r, i) => (
+                        <span key={i}>{r.emoji}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-3 py-1 rounded-full font-sans font-medium ${l.isRead ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800 animate-pulse"}`}>
+                    {l.isRead ? "Read ✓" : "Unread ✉️"}
+                  </span>
+                  <button className="px-3 py-1 rounded-full bg-[#D4A857] text-white text-xs font-sans font-medium flex items-center gap-1 shadow-xs">
+                    <Eye className="w-3.5 h-3.5" /> Read 📜
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -34,6 +34,11 @@ export async function POST(request: Request) {
         break;
       }
 
+      case "clearLetters": {
+        db.letters = [];
+        break;
+      }
+
       case "markLetterRead": {
         db.letters = db.letters.map((l) =>
           l.id === payload.letterId ? { ...l, isRead: true } : l

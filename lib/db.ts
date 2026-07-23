@@ -64,9 +64,40 @@ declare global {
   var __sunrise_db_cache: DatabaseSchema | undefined;
 }
 
+export function sanitizeDatabase(data: DatabaseSchema): DatabaseSchema {
+  // Filter out legacy hardcoded sample/mock letters referencing Mumbai or old mock IDs
+  const cleanLetters = (data.letters || []).filter((l) => {
+    if (l.id === "letter-1" || l.id === "letter-2") return false;
+    if (l.content && (l.content.includes("Sabarmati Riverfront") || l.content.includes("Marine Drive") || l.content.includes("Arabian Sea in Mumbai"))) return false;
+    if (l.title && (l.title.includes("Mumbai Sunset at Bandra Stand") || l.title.includes("Quiet Rain in Gujarat"))) return false;
+    return true;
+  });
+
+  // Ensure Ameera's city is Nashik across profiles
+  const cleanProfiles = {
+    Harit: { ...PROFILES.Harit },
+    Ameera: { ...PROFILES.Ameera, city: "Nashik", state: "Maharashtra" },
+  };
+
+  // Clean countdowns to point to Nashik or Reunion in Mumbai
+  const cleanCountdowns = (data.countdowns || INITIAL_COUNTDOWNS).map((cd) => {
+    if (cd.title.toLowerCase().includes("nashik")) {
+      return { ...cd, title: "Reunion in Mumbai 🚆", targetDate: "2026-08-15T10:00:00Z" };
+    }
+    return cd;
+  });
+
+  return {
+    ...data,
+    profiles: cleanProfiles,
+    letters: cleanLetters,
+    countdowns: cleanCountdowns,
+  };
+}
+
 export function getDatabase(): DatabaseSchema {
   if (globalThis.__sunrise_db_cache) {
-    return globalThis.__sunrise_db_cache;
+    return sanitizeDatabase(globalThis.__sunrise_db_cache);
   }
 
   try {
@@ -81,8 +112,9 @@ export function getDatabase(): DatabaseSchema {
     }
     const data = fs.readFileSync(DB_PATH, "utf-8");
     const parsed = JSON.parse(data);
-    globalThis.__sunrise_db_cache = parsed;
-    return parsed;
+    const sanitized = sanitizeDatabase(parsed);
+    globalThis.__sunrise_db_cache = sanitized;
+    return sanitized;
   } catch {
     globalThis.__sunrise_db_cache = SEED_DATA;
     return SEED_DATA;
@@ -90,13 +122,14 @@ export function getDatabase(): DatabaseSchema {
 }
 
 export function saveDatabase(data: DatabaseSchema): void {
-  globalThis.__sunrise_db_cache = data;
+  const sanitized = sanitizeDatabase(data);
+  globalThis.__sunrise_db_cache = sanitized;
   try {
     const dir = path.dirname(DB_PATH);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf-8");
+    fs.writeFileSync(DB_PATH, JSON.stringify(sanitized, null, 2), "utf-8");
   } catch {
     // Non-blocking in serverless environments
   }
@@ -109,26 +142,33 @@ export async function getCloudDatabase(): Promise<DatabaseSchema> {
       const docRef = adminDb.collection("app_state").doc("sunrise_main");
       const snap = await docRef.get();
       if (snap.exists) {
-        const data = snap.data() as DatabaseSchema;
-        const merged: DatabaseSchema = {
+        const rawData = snap.data() as DatabaseSchema;
+        const merged: DatabaseSchema = sanitizeDatabase({
           ...SEED_DATA,
-          ...data,
-          letters: data.letters || [],
-          dinners: data.dinners || [],
-          gratitudes: data.gratitudes || [],
-          memories: data.memories || [],
-          voiceNotes: data.voiceNotes || [],
-          wishes: data.wishes || INITIAL_WISHES,
-          surprises: data.surprises || [],
-          countdowns: data.countdowns || INITIAL_COUNTDOWNS,
-          timeCapsules: data.timeCapsules || [],
-          sleepLogs: data.sleepLogs || [],
-          bookQuotes: data.bookQuotes || [],
-          animeList: data.animeList || [],
-          playlist: data.playlist || [],
-          dailyMission: data.dailyMission || INITIAL_DAILY_MISSION,
-        };
+          ...rawData,
+          letters: rawData.letters || [],
+          dinners: rawData.dinners || [],
+          gratitudes: rawData.gratitudes || [],
+          memories: rawData.memories || [],
+          voiceNotes: rawData.voiceNotes || [],
+          wishes: rawData.wishes || INITIAL_WISHES,
+          surprises: rawData.surprises || [],
+          countdowns: rawData.countdowns || INITIAL_COUNTDOWNS,
+          timeCapsules: rawData.timeCapsules || [],
+          sleepLogs: rawData.sleepLogs || [],
+          bookQuotes: rawData.bookQuotes || [],
+          animeList: rawData.animeList || [],
+          playlist: rawData.playlist || [],
+          dailyMission: rawData.dailyMission || INITIAL_DAILY_MISSION,
+        });
+
         globalThis.__sunrise_db_cache = merged;
+
+        // If legacy mock letters were filtered out, write back the clean state to Firestore
+        if (rawData.letters && rawData.letters.some((l) => l.id === "letter-1" || l.id === "letter-2" || (l.content && l.content.includes("Sabarmati")))) {
+          await saveCloudDatabase(merged);
+        }
+
         return merged;
       }
     } catch (err) {
@@ -139,12 +179,13 @@ export async function getCloudDatabase(): Promise<DatabaseSchema> {
 }
 
 export async function saveCloudDatabase(data: DatabaseSchema): Promise<void> {
-  saveDatabase(data);
+  const sanitized = sanitizeDatabase(data);
+  saveDatabase(sanitized);
   if (getApps().length) {
     try {
       const adminDb = getFirestore();
       const docRef = adminDb.collection("app_state").doc("sunrise_main");
-      await docRef.set(data, { merge: true });
+      await docRef.set(sanitized, { merge: true });
     } catch (err) {
       console.error("Firestore Admin save notice:", err);
     }

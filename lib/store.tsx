@@ -78,6 +78,7 @@ interface SunriseContextType {
 
   // Mutators
   addLetter: (letter: Omit<Letter, "id" | "isRead" | "reactions" | "replies">) => void;
+  clearLetters: () => void;
   markLetterRead: (letterId: string) => void;
   reactToLetter: (letterId: string, emoji: Reaction["emoji"]) => void;
   replyToLetter: (letterId: string, text: string) => void;
@@ -142,7 +143,11 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       const json = await res.json();
       if (json.success && json.data) {
         const d = json.data;
-        if (Array.isArray(d.letters)) setLetters(d.letters);
+        if (Array.isArray(d.letters)) {
+          // Filter out legacy mock letters letter-1 / letter-2
+          const clean = d.letters.filter((l: Letter) => l.id !== "letter-1" && l.id !== "letter-2");
+          setLetters(clean);
+        }
         if (Array.isArray(d.dinners)) setDinners(d.dinners);
         if (Array.isArray(d.gratitudes)) setGratitudes(d.gratitudes);
         if (Array.isArray(d.memories)) setMemories(d.memories);
@@ -249,6 +254,11 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
     };
     setLetters((prev) => [newLetter, ...prev]);
     dispatchCloudAction("addLetter", letterData);
+  };
+
+  const clearLetters = () => {
+    setLetters([]);
+    dispatchCloudAction("clearLetters", {});
   };
 
   const markLetterRead = (letterId: string) => {
@@ -521,6 +531,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
         dailyMission,
 
         addLetter,
+        clearLetters,
         markLetterRead,
         reactToLetter,
         replyToLetter,
