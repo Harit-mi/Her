@@ -1,5 +1,8 @@
--- Supabase Database Schema & RLS Policies for Sunrise App
+-- =========================================================================
+-- SUPABASE DATABASE SCHEMA & STRICT RLS POLICIES FOR SUNRISE APP
 -- Project: ytuzctkejjdtahtmxjwo (https://supabase.com/dashboard/project/ytuzctkejjdtahtmxjwo)
+-- Whitelisted Emails: haritmishra123@gmail.com & shethameera@gmail.com
+-- =========================================================================
 
 -- 1. Create letters table
 CREATE TABLE IF NOT EXISTS public.letters (
@@ -96,47 +99,57 @@ ALTER TABLE public.voice_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.memories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if any
+-- Drop any previous permissive or fallback policies
 DROP POLICY IF EXISTS "Allow whitelisted couple full access on letters" ON public.letters;
-DROP POLICY IF EXISTS "Allow whitelisted couple full access on dinners" ON public.dinners;
-DROP POLICY IF EXISTS "Allow whitelisted couple full access on gratitudes" ON public.gratitudes;
-DROP POLICY IF EXISTS "Allow whitelisted couple full access on voice_notes" ON public.voice_notes;
-DROP POLICY IF EXISTS "Allow whitelisted couple full access on memories" ON public.memories;
-DROP POLICY IF EXISTS "Allow whitelisted couple full access on profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Whitelisted couple select policy on letters" ON public.letters;
+DROP POLICY IF EXISTS "Whitelisted couple insert policy on letters" ON public.letters;
+DROP POLICY IF EXISTS "Whitelisted couple update policy on letters" ON public.letters;
+DROP POLICY IF EXISTS "Whitelisted couple delete policy on letters" ON public.letters;
 
--- Allowlist RLS Policies for exact-match emails (haritmishra123@gmail.com, shethameera@gmail.com)
-CREATE POLICY "Allow whitelisted couple full access on letters" ON public.letters
-  FOR ALL USING (
+-- =========================================================================
+-- STRICT RLS POLICIES FOR PUBLIC.LETTERS TABLE (Exact Email Whitelist)
+-- =========================================================================
+
+-- 1. SELECT Policy (Read Access)
+CREATE POLICY "Whitelisted couple select policy on letters" ON public.letters
+  FOR SELECT
+  USING (
     (auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com')
-    OR auth.role() = 'anon'
   );
 
-CREATE POLICY "Allow whitelisted couple full access on dinners" ON public.dinners
-  FOR ALL USING (
+-- 2. INSERT Policy (Write Access)
+CREATE POLICY "Whitelisted couple insert policy on letters" ON public.letters
+  FOR INSERT
+  WITH CHECK (
     (auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com')
-    OR auth.role() = 'anon'
   );
 
-CREATE POLICY "Allow whitelisted couple full access on gratitudes" ON public.gratitudes
-  FOR ALL USING (
+-- 3. UPDATE Policy (Reactions & Replies)
+CREATE POLICY "Whitelisted couple update policy on letters" ON public.letters
+  FOR UPDATE
+  USING (
     (auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com')
-    OR auth.role() = 'anon'
   );
 
-CREATE POLICY "Allow whitelisted couple full access on voice_notes" ON public.voice_notes
-  FOR ALL USING (
+-- 4. DELETE Policy
+CREATE POLICY "Whitelisted couple delete policy on letters" ON public.letters
+  FOR DELETE
+  USING (
     (auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com')
-    OR auth.role() = 'anon'
   );
 
-CREATE POLICY "Allow whitelisted couple full access on memories" ON public.memories
-  FOR ALL USING (
-    (auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com')
-    OR auth.role() = 'anon'
-  );
+-- RLS Policies for other tables (dinners, gratitudes, voice_notes, memories, profiles)
+CREATE POLICY "Whitelisted couple access on dinners" ON public.dinners
+  FOR ALL USING ((auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com'));
 
-CREATE POLICY "Allow whitelisted couple full access on profiles" ON public.profiles
-  FOR ALL USING (
-    (auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com')
-    OR auth.role() = 'anon'
-  );
+CREATE POLICY "Whitelisted couple access on gratitudes" ON public.gratitudes
+  FOR ALL USING ((auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com'));
+
+CREATE POLICY "Whitelisted couple access on voice_notes" ON public.voice_notes
+  FOR ALL USING ((auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com'));
+
+CREATE POLICY "Whitelisted couple access on memories" ON public.memories
+  FOR ALL USING ((auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com'));
+
+CREATE POLICY "Whitelisted couple access on profiles" ON public.profiles
+  FOR ALL USING ((auth.jwt() ->> 'email') IN ('haritmishra123@gmail.com', 'shethameera@gmail.com'));
