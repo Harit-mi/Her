@@ -19,7 +19,7 @@ import {
   PlaylistSongItem,
   DailyMissionItem,
 } from "./types";
-import { PROFILES, INITIAL_WISHES, INITIAL_COUNTDOWNS, INITIAL_DAILY_MISSION } from "./initialData";
+import { PROFILES, INITIAL_DAILY_MISSION } from "./initialData";
 
 const DB_PATH = path.join(process.cwd(), "data", "sunrise_db.json");
 
@@ -48,9 +48,9 @@ export const SEED_DATA: DatabaseSchema = {
   gratitudes: [],
   memories: [],
   voiceNotes: [],
-  wishes: INITIAL_WISHES,
+  wishes: [],
   surprises: [],
-  countdowns: INITIAL_COUNTDOWNS,
+  countdowns: [],
   timeCapsules: [],
   sleepLogs: [],
   bookQuotes: [],
@@ -65,8 +65,20 @@ declare global {
 }
 
 export function sanitizeDatabase(data: DatabaseSchema): DatabaseSchema {
-  // Filter strictly legacy initial seed letter-1 and letter-2 by ID only
+  // Filter out all legacy mock/seed items across all collections
   const cleanLetters = (data.letters || []).filter((l) => l.id !== "letter-1" && l.id !== "letter-2");
+  const cleanDinners = (data.dinners || []).filter((d) => !d.id.startsWith("dinner-18"));
+  const cleanGratitudes = (data.gratitudes || []).filter((g) => g.id !== "gratitude-1" && g.id !== "gratitude-2");
+  const cleanMemories = (data.memories || []).filter((m) => m.id !== "mem-1");
+  const cleanVoiceNotes = (data.voiceNotes || []).filter((v) => v.id !== "voice-1" && v.id !== "voice-2");
+  const cleanWishes = (data.wishes || []).filter((w) => w.id !== "wish-1" && w.id !== "wish-2");
+  const cleanSurprises = (data.surprises || []).filter((s) => s.id !== "surp-1");
+  const cleanCountdowns = (data.countdowns || []).filter((c) => c.id !== "cd-1" && c.id !== "cd-2");
+  const cleanTimeCapsules = (data.timeCapsules || []).filter((t) => t.id !== "tc-1");
+  const cleanSleepLogs = (data.sleepLogs || []).filter((s) => s.id !== "sleep-1");
+  const cleanBookQuotes = (data.bookQuotes || []).filter((b) => b.id !== "quote-1");
+  const cleanAnimeList = (data.animeList || []).filter((a) => a.id !== "anime-1");
+  const cleanPlaylist = (data.playlist || []).filter((p) => p.id !== "song-1");
 
   // Enforce profiles for Harit (Ahmedabad, Gujarat) & Ameera (Nashik, Maharashtra)
   const cleanProfiles = {
@@ -74,18 +86,22 @@ export function sanitizeDatabase(data: DatabaseSchema): DatabaseSchema {
     Ameera: { ...PROFILES.Ameera, city: "Nashik", state: "Maharashtra" },
   };
 
-  const cleanCountdowns = (data.countdowns || INITIAL_COUNTDOWNS).map((cd) => {
-    if (cd.title.toLowerCase().includes("nashik")) {
-      return { ...cd, title: "Reunion in Mumbai 🚆", targetDate: "2026-08-15T10:00:00Z" };
-    }
-    return cd;
-  });
-
   return {
     ...data,
     profiles: cleanProfiles,
     letters: cleanLetters,
+    dinners: cleanDinners,
+    gratitudes: cleanGratitudes,
+    memories: cleanMemories,
+    voiceNotes: cleanVoiceNotes,
+    wishes: cleanWishes,
+    surprises: cleanSurprises,
     countdowns: cleanCountdowns,
+    timeCapsules: cleanTimeCapsules,
+    sleepLogs: cleanSleepLogs,
+    bookQuotes: cleanBookQuotes,
+    animeList: cleanAnimeList,
+    playlist: cleanPlaylist,
   };
 }
 
@@ -145,9 +161,9 @@ export async function getCloudDatabase(): Promise<DatabaseSchema> {
           gratitudes: rawData.gratitudes || [],
           memories: rawData.memories || [],
           voiceNotes: rawData.voiceNotes || [],
-          wishes: rawData.wishes || INITIAL_WISHES,
+          wishes: rawData.wishes || [],
           surprises: rawData.surprises || [],
-          countdowns: rawData.countdowns || INITIAL_COUNTDOWNS,
+          countdowns: rawData.countdowns || [],
           timeCapsules: rawData.timeCapsules || [],
           sleepLogs: rawData.sleepLogs || [],
           bookQuotes: rawData.bookQuotes || [],
@@ -158,9 +174,8 @@ export async function getCloudDatabase(): Promise<DatabaseSchema> {
 
         globalThis.__sunrise_db_cache = merged;
 
-        if (rawData.letters && rawData.letters.some((l) => l.id === "letter-1" || l.id === "letter-2")) {
-          await saveCloudDatabase(merged);
-        }
+        // Persist clean state back to Firestore if legacy mock items were sanitized
+        await saveCloudDatabase(merged);
 
         return merged;
       }

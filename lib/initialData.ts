@@ -41,7 +41,7 @@ export const PROFILES: Record<"Harit" | "Ameera", UserProfile> = {
   },
 };
 
-// Clean initial start state for Harit & Ameera
+// 100% Clean initial start state for Harit & Ameera (Zero dummy items)
 export const INITIAL_LETTERS: Letter[] = [];
 
 export const INITIAL_DINNERS: DinnerItem[] = [];
@@ -52,34 +52,11 @@ export const INITIAL_MEMORIES: MemoryItem[] = [];
 
 export const INITIAL_VOICE_NOTES: VoiceNoteItem[] = [];
 
-export const INITIAL_WISHES: WishItem[] = [
-  {
-    id: "wish-1",
-    title: "Reunion trip together in Mumbai 🚆",
-    category: "Travel",
-    completed: false,
-    addedBy: "Ameera",
-  },
-  {
-    id: "wish-2",
-    title: "Explore Gir National Park in Gujarat 🦁",
-    category: "Travel",
-    completed: false,
-    addedBy: "Harit",
-  },
-];
+export const INITIAL_WISHES: WishItem[] = [];
 
 export const INITIAL_SURPRISES: SurpriseItem[] = [];
 
-export const INITIAL_COUNTDOWNS: CountdownItem[] = [
-  {
-    id: "cd-1",
-    title: "Reunion in Mumbai 🚆",
-    targetDate: "2026-08-15T10:00:00Z",
-    category: "Visit",
-    icon: "🚆",
-  },
-];
+export const INITIAL_COUNTDOWNS: CountdownItem[] = [];
 
 export const INITIAL_TIME_CAPSULES: TimeCapsuleItem[] = [];
 
