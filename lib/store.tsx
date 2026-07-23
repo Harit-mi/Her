@@ -138,6 +138,8 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
 
   // Synchronize state with Supabase & Server Cloud API
   const refreshData = useCallback(async () => {
+    let fetchedSupabaseLetters: Letter[] = [];
+
     if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       try {
         const { data: supaLetters, error } = await supabase
@@ -145,8 +147,8 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (!error && supaLetters) {
-          const clean: Letter[] = supaLetters
+        if (!error && supaLetters && supaLetters.length > 0) {
+          fetchedSupabaseLetters = supaLetters
             .filter((l: any) => l.id !== "letter-1" && l.id !== "letter-2")
             .map((row: any) => ({
               id: row.id,
@@ -167,7 +169,6 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
               reactions: row.reactions || [],
               replies: row.replies || [],
             }));
-          setLetters(clean);
         }
       } catch {
         // quiet fallback
@@ -180,9 +181,18 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       const json = await res.json();
       if (json.success && json.data) {
         const d = json.data;
-        if (Array.isArray(d.letters) && !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-          const clean = d.letters.filter((l: Letter) => l.id !== "letter-1" && l.id !== "letter-2");
-          setLetters(clean);
+        if (Array.isArray(d.letters)) {
+          const cloudLetters = d.letters.filter((l: Letter) => l.id !== "letter-1" && l.id !== "letter-2");
+          if (fetchedSupabaseLetters.length > 0) {
+            const supaIds = new Set(fetchedSupabaseLetters.map((l) => l.id));
+            const merged = [...fetchedSupabaseLetters];
+            cloudLetters.forEach((cl: Letter) => {
+              if (!supaIds.has(cl.id)) merged.push(cl);
+            });
+            setLetters(merged);
+          } else {
+            setLetters(cloudLetters);
+          }
         }
         if (Array.isArray(d.dinners)) setDinners(d.dinners);
         if (Array.isArray(d.gratitudes)) setGratitudes(d.gratitudes);
