@@ -66,7 +66,7 @@ export default function LoginModal() {
   // Shared Password Fallback Auth Route
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password) {
+    if (!password.trim()) {
       setErrorMsg("Please enter the private space password.");
       return;
     }
@@ -80,7 +80,7 @@ export default function LoginModal() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ password, role: selectedRole }),
+        body: JSON.stringify({ password: password.trim(), role: selectedRole }),
       });
 
       const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));

@@ -2,20 +2,25 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { password, role } = await request.json().catch(() => ({}));
+    const body = await request.json().catch(() => ({}));
+    const password = (body.password || "").toString().trim();
+    const role = (body.role || "Harit").toString();
 
-    if (!password || typeof password !== "string") {
+    if (!password) {
       return NextResponse.json(
         { success: false, error: "Password is required." },
         { status: 400 }
       );
     }
 
-    const inputPass = password.trim();
     const envPass = (process.env.APP_PASSWORD || "").trim();
+    const cleanPass = password.toLowerCase();
 
-    // Accept process.env.APP_PASSWORD or "panda1902"
-    const isValid = inputPass === "panda1902" || (envPass !== "" && inputPass === envPass);
+    // Accept "panda1902", "panda 1902", or process.env.APP_PASSWORD
+    const isValid =
+      cleanPass === "panda1902" ||
+      cleanPass === "panda 1902" ||
+      (envPass !== "" && (password === envPass || cleanPass === envPass.toLowerCase()));
 
     if (!isValid) {
       return NextResponse.json(
