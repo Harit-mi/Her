@@ -5,6 +5,7 @@ import { useSunriseStore } from "@/lib/store";
 import LoginModal from "./LoginModal";
 import UserSwitcher from "./UserSwitcher";
 import Navbar from "./Navbar";
+import SunriseAnimation from "./SunriseAnimation";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isLoggedIn } = useSunriseStore();
@@ -31,6 +32,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       </header>
       <main className="flex-1 pb-24 pt-4">{children}</main>
       <Navbar />
+      <SunriseAnimation />
     </>
   );
 }
