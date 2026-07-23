@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { supabase } from "./supabase";
 import {
   UserRole,
   Letter,
@@ -135,16 +136,51 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   const [playlist, setPlaylist] = useState<PlaylistSongItem[]>(INITIAL_PLAYLIST);
   const [dailyMission, setDailyMission] = useState<DailyMissionItem>(INITIAL_DAILY_MISSION);
 
-  // Synchronize state with Cloud API
+  // Synchronize state with Supabase & Server Cloud API
   const refreshData = useCallback(async () => {
+    if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      try {
+        const { data: supaLetters, error } = await supabase
+          .from("letters")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (!error && supaLetters) {
+          const clean: Letter[] = supaLetters
+            .filter((l: any) => l.id !== "letter-1" && l.id !== "letter-2")
+            .map((row: any) => ({
+              id: row.id,
+              author: row.author,
+              recipient: row.recipient,
+              title: row.title,
+              content: row.content,
+              writtenAt: row.written_at || row.writtenAt || "Nightly Note",
+              dateStr: row.date_str || row.dateStr || "July 23, 2026",
+              mood: row.mood || "😌 Peaceful",
+              listeningTo: row.listening_to,
+              readingBook: row.reading_book,
+              watchingAnime: row.watching_anime,
+              photoUrls: row.photo_urls,
+              voiceNoteUrl: row.voice_note_url,
+              themeColor: row.theme_color,
+              isRead: row.is_read ?? false,
+              reactions: row.reactions || [],
+              replies: row.replies || [],
+            }));
+          setLetters(clean);
+        }
+      } catch {
+        // quiet fallback
+      }
+    }
+
     try {
       const res = await fetch("/api/sync", { cache: "no-store" });
       if (!res.ok) return;
       const json = await res.json();
       if (json.success && json.data) {
         const d = json.data;
-        if (Array.isArray(d.letters)) {
-          // Filter out legacy mock letters letter-1 / letter-2
+        if (Array.isArray(d.letters) && !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
           const clean = d.letters.filter((l: Letter) => l.id !== "letter-1" && l.id !== "letter-2");
           setLetters(clean);
         }
@@ -244,7 +280,7 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Mutators with local update + instant cloud sync
-  const addLetter = (letterData: Omit<Letter, "id" | "isRead" | "reactions" | "replies">) => {
+  const addLetter = async (letterData: Omit<Letter, "id" | "isRead" | "reactions" | "replies">) => {
     const newLetter: Letter = {
       ...letterData,
       id: `letter-${Date.now()}`,
@@ -253,27 +289,70 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
       replies: [],
     };
     setLetters((prev) => [newLetter, ...prev]);
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      try {
+        await supabase.from("letters").insert({
+          id: newLetter.id,
+          author: newLetter.author,
+          recipient: newLetter.recipient,
+          title: newLetter.title,
+          content: newLetter.content,
+          written_at: newLetter.writtenAt,
+          date_str: newLetter.dateStr,
+          mood: newLetter.mood,
+          listening_to: newLetter.listeningTo,
+          reading_book: newLetter.readingBook,
+          photo_urls: newLetter.photoUrls,
+          is_read: false,
+          reactions: [],
+          replies: [],
+        });
+      } catch {
+        // quiet
+      }
+    }
+
     dispatchCloudAction("addLetter", letterData);
   };
 
-  const clearLetters = () => {
+  const clearLetters = async () => {
     setLetters([]);
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      try {
+        await supabase.from("letters").delete().neq("id", "none");
+      } catch {
+        // quiet
+      }
+    }
+
     dispatchCloudAction("clearLetters", {});
   };
 
-  const markLetterRead = (letterId: string) => {
+  const markLetterRead = async (letterId: string) => {
     setLetters((prev) =>
       prev.map((l) => (l.id === letterId ? { ...l, isRead: true } : l))
     );
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      try {
+        await supabase.from("letters").update({ is_read: true }).eq("id", letterId);
+      } catch {
+        // quiet
+      }
+    }
+
     dispatchCloudAction("markLetterRead", { letterId });
   };
 
-  const reactToLetter = (letterId: string, emoji: Reaction["emoji"]) => {
+  const reactToLetter = async (letterId: string, emoji: Reaction["emoji"]) => {
     const reactionObj: Reaction = {
       emoji,
       by: loggedInUser,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
+
     setLetters((prev) =>
       prev.map((l) =>
         l.id === letterId
@@ -284,21 +363,48 @@ export function SunriseProvider({ children }: { children: React.ReactNode }) {
           : l
       )
     );
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      try {
+        const target = letters.find((l) => l.id === letterId);
+        if (target) {
+          const updatedReactions = [...(target.reactions || []).filter((r) => r.by !== loggedInUser), reactionObj];
+          await supabase.from("letters").update({ reactions: updatedReactions }).eq("id", letterId);
+        }
+      } catch {
+        // quiet
+      }
+    }
+
     dispatchCloudAction("reactToLetter", { letterId, emoji, user: loggedInUser });
   };
 
-  const replyToLetter = (letterId: string, text: string) => {
+  const replyToLetter = async (letterId: string, text: string) => {
     const replyObj = {
       id: `reply-${Date.now()}`,
       sender: loggedInUser,
       text,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
+
     setLetters((prev) =>
       prev.map((l) =>
         l.id === letterId ? { ...l, replies: [...l.replies, replyObj] } : l
       )
     );
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      try {
+        const target = letters.find((l) => l.id === letterId);
+        if (target) {
+          const updatedReplies = [...(target.replies || []), replyObj];
+          await supabase.from("letters").update({ replies: updatedReplies }).eq("id", letterId);
+        }
+      } catch {
+        // quiet
+      }
+    }
+
     dispatchCloudAction("replyToLetter", { letterId, text, sender: loggedInUser });
   };
 
